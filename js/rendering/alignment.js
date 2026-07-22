@@ -467,7 +467,6 @@ export function performAutoAlignment(updateParamsCallback, onSuccessCallback) {
                     : '';
                 const message =
                     safeT('alignment.complete', { algorithm: algoType.toUpperCase() }) + '\n' +
-                    safeT('alignment.pipeline') + '\n' +
                     regionLine +
                     safeT('alignment.processingTime', { time: elapsedMs }) + '\n' +
                     safeT('alignment.separator') + '\n' +
