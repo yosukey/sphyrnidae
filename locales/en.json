@@ -435,7 +435,6 @@
     "adoptedPoints": "Adopted Points: {{valid}} / {{total}}",
     "verticalShift": "Vertical Shift: {{value}}px",
     "horizontalShift": "Horizontal Shift: {{value}}px",
-    "pipeline": "Pipeline: Disparity Comfort",
     "analysisRegion": "Analysis region: crop window ({{width}}×{{height}} px/eye)",
     "dxRange": "DX range: [{{min}}, {{max}}] px",
     "zeroPlane": "Zero plane p{{percentile}}: {{value}} px",
