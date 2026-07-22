@@ -1,0 +1,132 @@
+/**
+ * base.css
+ * Base styles including CSS variables, reset, scrollbar, and common styles
+ */
+
+/* ===== CSS Variables ===== */
+:root {
+  /* Background colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: rgba(70, 70, 70, 0.35);
+  --bg-card: rgba(42, 42, 42, 0.50);
+  --bg-hover: rgba(51, 51, 51, 0.60);
+
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-tertiary: #666666;
+
+  /* Accent colors */
+  --accent-blue: #2196F3;
+  --accent-blue-hover: #1976D2;
+  --accent-green: #4CAF50;
+  --accent-red: #f44336;
+
+  /* Border & Shadow */
+  --border-color: rgba(58, 58, 58, 0.8);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-heavy: 0 4px 20px rgba(0, 0, 0, 0.5);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 6px;
+  --spacing-md: 10px;
+  --spacing-lg: 14px;
+  --spacing-xl: 20px;
+
+  /* Font sizes */
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-md: 12px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+
+  /* Z-index layers (centralized stacking context management) */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-fixed: 1000;
+  --z-drawer: 1001;
+  --z-overlay: 9999;
+  --z-modal: 10000;
+  --z-alert: 99999;
+
+  /* Border radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+
+  /* Transitions */
+  --transition-fast: 0.2s;
+  --transition-medium: 0.3s;
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Reset Styles ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Scrollbar Styling ===== */
+.menu-panel::-webkit-scrollbar,
+.menu-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.menu-panel::-webkit-scrollbar-track,
+.menu-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu-panel::-webkit-scrollbar-thumb,
+.menu-content::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 2.5px;
+}
+
+.menu-panel::-webkit-scrollbar-thumb:hover,
+.menu-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ===== Common Base Styles ===== */
+
+/* Canvas: prevent default browser touch actions */
+#canvas-container canvas {
+  touch-action: none;
+}
+
+/* Rectangle selection overlay */
+#crop-selection-overlay {
+  pointer-events: none;
+}
+
+#crop-selection-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+#crop-selection-rect {
+  position: relative;
+  z-index: 2;
+  border: 3px solid var(--accent-blue) !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5),
+              0 0 10px rgba(33, 150, 243, 0.8),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}

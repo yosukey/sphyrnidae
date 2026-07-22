@@ -1,0 +1,36 @@
+# Cloudflare Pages custom response headers.
+# https://developers.cloudflare.com/pages/configuration/headers/
+#
+# The Content-Security-Policy below MUST stay in sync with the <meta> CSP in
+# index.html (same directives). Delivering it as a real HTTP header additionally
+# covers non-document responses (workers, etc.) that a <meta> policy cannot reach,
+# and lets frame-ancestors apply (browsers ignore frame-ancestors from <meta>).
+# The <meta> copy is kept as an offline / GitHub-Pages fallback where custom
+# headers are unavailable. If you change one, change the other (the importmap
+# sha256 in script-src is also mirrored in index.html's CSP).
+# X-Frame-Options is kept as a fallback for older browsers.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-z/vz5LM6ac+HoewOxgCu7I+V+jiixrTKbcLeyjoQrhg=' https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https:; worker-src 'self' blob:; child-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'self';
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+# Update-detection files must never be served stale. A stale copy anywhere between
+# the origin and the browser (CDN edge, proxy, HTTP cache) suppresses update
+# detection for the whole fleet:
+#   - version.json      : the version-check source of truth (versionCheck.js).
+#   - version-config.js : importScripts()'d by sw.js and <script>'d by index.html;
+#                         its bytes are what the SW update algorithm diffs to detect
+#                         a new release.
+#   - sw.js             : the Service Worker script itself.
+# Client code already uses cache:'no-store' / updateViaCache:'none'; these headers
+# extend that guarantee to the CDN edge and any intermediary. (Explicit Cache API
+# put()s during precache are unaffected by no-store.)
+/version.json
+  Cache-Control: no-cache, no-store, must-revalidate
+/version-config.js
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache

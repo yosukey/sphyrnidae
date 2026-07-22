@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Content Security Policy: restrict loading of external resources to improve security -->
+    <!-- SECURITY TRADE-OFF: img-src and connect-src allow https: broadly to support the external
+         image loading feature (?src=URL). This means if XSS occurs, data could be sent to any HTTPS
+         server. This is an accepted trade-off for the core feature. Mitigations: strict script-src
+         with SRI hashes, no unsafe-inline for scripts. -->
+    <!-- NOTE: frame-ancestors is intentionally omitted here. It is ignored when delivered via a
+         <meta> element (browsers only honor it in an HTTP response header). Clickjacking protection
+         is instead delivered as a real HTTP header from the Cloudflare Pages `_headers` file
+         (frame-ancestors + X-Frame-Options). -->
+    <!-- OpenCV.js requires -sDYNAMIC_EXECUTION=0 (CMAKE_EXE_LINKER_FLAGS) to avoid 'unsafe-eval'; 'wasm-unsafe-eval' is needed for WASM -->
+    <!-- NOTE: style-src 'unsafe-inline' is required because JavaScript dynamically sets element.style
+         properties (e.g. display toggling). Removing it requires refactoring all JS style manipulation
+         to use CSS classes. This is lower risk than script-src unsafe-inline (which is NOT used). -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'wasm-unsafe-eval' 'sha256-z/vz5LM6ac+HoewOxgCu7I+V+jiixrTKbcLeyjoQrhg=' https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' blob: data: https:;
+        font-src 'self' data:;
+        connect-src 'self' blob: data: https://cdn.jsdelivr.net https:;
+        worker-src 'self' blob:;
+        child-src 'self' blob:;
+        base-uri 'self';
+        form-action 'self';
+    ">
+    <!-- Preconnect to CDN for faster resource loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <title>Sphyrnidae</title>
+    <!-- CSS Files (modular structure) -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/controls.css">
+    <link rel="stylesheet" href="css/viewer.css">
+    <link rel="stylesheet" href="css/dialogs.css">
+    <link rel="stylesheet" href="css/utilities.css">
+    <!-- CDN scripts with Subresource Integrity (SRI) to prevent supply-chain attacks -->
+    <!-- SRI hashes computed from npm package contents (sha384). Use non-minified URLs for
+         exifreader and upng-js because their npm packages lack .min.js files (jsdelivr
+         auto-minification produces non-deterministic output unsuitable for SRI). -->
+    <script defer src="https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js" integrity="sha384-OCCT+KZFt2FsqTxlTd8CUSq86zW/ZKmV0oe7qj36oye2CDbbVuxIXTY20t/u9LJt" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js" integrity="sha384-Vd/fHyigt+hdznRAa0mn62DQNvCmqRWpCn3uXOlJlBRdBoNnGQPUgYLD2oiouIuW" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js" integrity="sha384-4RMW82CWFobXY+HRHXe5go/V5acBhiIVGCT+2k7TEoxi7AiWKw8WoWb9qMU+FAFu" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js" integrity="sha384-5zRBkJ6IHy9ezWHX/cBuwC0SnrK23Cfx6G6kIjwR5no9khaSv2md2ZHMXphI3UCB" crossorigin="anonymous"></script>
+    <script defer src="./wasm-feature-detect.umd.js"></script>
+    <script defer src="./opencv/loader.js"></script>
+    <script defer src="./js/opencv-init.js"></script>
+    <!-- PWA support -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Sphyrnidae">
+    <link rel="apple-touch-icon" href="./icons/icon-192x192.png">
+</head>
+<body class="menu-open status-open">
+    <!-- Early viewer mode detection (prevents UI flash when loading from URL) -->
+    <script src="./js/early-viewer-mode.js"></script>
+    <!-- Portrait mode guard -->
+    <div id="portrait-mode-guard" class="portrait-guard">
+        <div class="portrait-guard-content">
+            <div class="portrait-guard-icon">📱</div>
+            <div class="portrait-guard-rotate-icon">🔄</div>
+            <h2 class="portrait-guard-title" data-i18n="portraitGuard.title">Please rotate your screen</h2>
+            <p class="portrait-guard-message" data-i18n="portraitGuard.message" data-i18n-html>This app is optimized for landscape viewing.<br>Please rotate your screen or access it from a PC.</p>
+            <div class="portrait-guard-actions">
+                <button id="continueInPortraitBtn" class="portrait-guard-btn portrait-guard-btn-primary" data-i18n="portraitGuard.continue">Continue anyway</button>
+                <label class="portrait-guard-checkbox">
+                    <input type="checkbox" id="portraitGuardDismissCheckbox" />
+                    <span data-i18n="portraitGuard.dontShowAgain">Don't show again</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skip link for keyboard navigation (accessibility) -->
+    <a href="#canvas-container" class="skip-link" data-i18n="accessibility.skipToContent">Skip to content</a>
+
+    <!-- Left menu drawer handle (shown when closed) -->
+    <button id="menu-drawer-handle" class="drawer-handle" data-i18n="[aria-label]accessibility.openMenu" aria-label="Open menu">
+        <span class="drawer-handle-icon" aria-hidden="true">›</span>
+    </button>
+
+    <!-- Top-right status panel -->
+    <div id="status-panel">
+        <button id="hideStatusBtn" class="status-close-btn">×</button>
+        <div class="status-row small">
+            <span class="status-label">🔧</span>
+            <span class="status-name" data-i18n="status.opencv">OpenCV:</span>
+            <span id="opencvStatus" class="status-value" style="color: #ffa726;" data-i18n="status.opencvLoading">Loading...</span>
+        </div>
+        <div class="status-row">
+            <span class="status-label">📁</span>
+            <span class="status-name" data-i18n="status.file">File:</span>
+            <span id="infoFileName" class="status-value" data-i18n="status.fileNotSelected">(Not selected)</span>
+        </div>
+        <div class="status-row file-name-secondary hidden" id="infoFileNameSecondaryRow">
+            <span class="status-label"></span>
+            <span class="status-name"></span>
+            <span id="infoFileNameSecondary" class="status-value" data-i18n-skip></span>
+        </div>
+        <div class="status-row small">
+            <span class="status-label">📐</span>
+            <span class="status-name" data-i18n="status.resolution">Resolution:</span>
+            <span id="infoResolution" class="status-value" data-i18n-skip>- x -</span>
+        </div>
+        <div class="status-row small highlight">
+            <span class="status-label">✂️</span>
+            <span class="status-name" data-i18n="status.effective">Effective:</span>
+            <span id="infoCroppedResolution" class="status-value" data-i18n-skip>- x -</span>
+        </div>
+        <div class="status-row">
+            <span class="status-label">🔍</span>
+            <span class="status-name" data-i18n="status.zoom">Zoom:</span>
+            <span id="valZoomDisplay" class="status-value" data-i18n-skip>100%</span>
+        </div>
+        <div class="status-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+            <button id="showExifBtn" class="exif-btn" disabled data-i18n="status.exifInfo">📋 EXIF info</button>
+        </div>
+    </div>
+
+    <!-- Status panel reopen button (shown when panel is hidden) -->
+    <button id="showStatusBtn" class="status-toggle-btn">📊</button>
+
+    <!-- Histogram panel -->
+    <!-- Hidden via inline style (not the .hidden class) so the initial state
+         matches the style.display checks used throughout the JS (showHistogramPanel,
+         updateHistogramPanelIfVisible, ui-fullscreen save/restore, renderer refresh,
+         and the storePrevDisplay mechanism in loader-external). -->
+    <div id="histogram-panel" style="display: none;">
+        <button id="closeHistogramPanel" class="status-close-btn">×</button>
+        <div style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--accent-blue);" data-i18n="status.histogram">📊 Histogram</span>
+                <select id="histogram-channel-panel" class="modern-select" style="width: 80px; font-size: 11px; padding: 2px 4px;">
+                    <option value="luminance" data-i18n="histogram.luminance">Luminance</option>
+                    <option value="rgb" data-i18n="histogram.rgb">RGB</option>
+                    <option value="r" data-i18n="histogram.channelR">R</option>
+                    <option value="g" data-i18n="histogram.channelG">G</option>
+                    <option value="b" data-i18n="histogram.channelB">B</option>
+                </select>
+            </div>
+        </div>
+        <div style="padding: 10px;">
+            <div style="margin-bottom: 8px;">
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; text-align: center;" data-i18n="histogram.left">L</div>
+                <canvas id="histogram-canvas-left-panel" width="300" height="120"></canvas>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; text-align: center;" data-i18n="histogram.right">R</div>
+                <canvas id="histogram-canvas-right-panel" width="300" height="120"></canvas>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+                <label class="modern-checkbox" style="font-size: 11px;">
+                    <input type="checkbox" id="histogramCropOnly" checked>
+                    <span class="checkmark"></span>
+                    <span class="label-text" data-i18n="histogram.cropOnly">Crop area only</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application layout (left menu + canvas) -->
+    <div id="app-layout">
+    <!-- Panel close tab (center-right edge) -->
+    <button id="panel-close-tab" class="panel-tab">‹</button>
+
+    <div id="ui-container">
+        <!-- Menu panel (slide-style) -->
+        <div class="menu-panels">
+            <!-- Main menu -->
+            <div class="menu-panel active" id="main-menu">
+                <div class="menu-header">
+                    <h1 data-i18n="menu.title">Sphyrnidae</h1>
+                </div>
+
+                <!-- Language selection button + open menu card -->
+                <div class="menu-cards single-row" style="margin-bottom: 0;">
+                    <button id="langSelectBtn" class="menu-card compact" data-submenu="language-menu" style="flex: 0 0 auto; padding: 8px; margin-right: 6px;">
+                        <span class="card-icon" style="font-size: 20px;">🌐</span>
+                    </button>
+                    <button class="menu-card wide" data-submenu="open-menu" style="flex: 1;">
+                        <span class="card-icon">📂</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.open">Open</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+                </div>
+
+                <!-- Quick controls -->
+                <div class="quick-controls">
+                    <div class="control-item">
+                        <label for="displayMode" class="control-label" data-i18n="controls.displayMode">Display mode</label>
+                        <select id="displayMode" class="modern-select">
+                            <option value="0" data-i18n="displayModes.anaglyph_red_blue">Anaglyph (red/cyan)</option>
+                            <option value="11" data-i18n="displayModes.anaglyph_gray">Anaglyph (gray)</option>
+  <option value="14" data-i18n="displayModes.anaglyph_blue_yellow">Anaglyph (blue/yellow)</option>
+  <option value="15" data-i18n="displayModes.anaglyph_dubois">Anaglyph (Dubois)</option>
+                            <option value="1" data-i18n="displayModes.interlace_h">Interlace (horizontal)</option>
+                            <option value="2" data-i18n="displayModes.interlace_v">Interlace (vertical)</option>
+                            <option value="7" data-i18n="displayModes.half_sbs">Half SBS</option>
+                            <option value="8" data-i18n="displayModes.parallel">Parallel view</option>
+                            <option value="9" data-i18n="displayModes.cross">Cross view</option>
+                            <option value="12" data-i18n="displayModes.lrl">LRL</option>
+                            <option value="13" data-i18n="displayModes.matrix">2x2 Matrix</option>
+                            <option value="10" data-i18n="displayModes.half_tab">Half TaB</option>
+                            <option value="16" data-i18n="displayModes.full_tab">Full TaB</option>
+                            <!-- mode 3 (Raw SBS) is not exposed in the UI -->
+                            <option value="4" data-i18n="displayModes.left_only">Left eye only</option>
+                            <option value="5" data-i18n="displayModes.right_only">Right eye only</option>
+                            <option value="6" data-i18n="displayModes.wiggle">Wiggle</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-row" style="margin-top: 8px;">
+                        <div class="checkbox-group">
+                            <label class="modern-checkbox">
+                                <input type="checkbox" id="swapLR">
+                                <span class="checkmark"></span>
+                                <span class="label-text" data-i18n="controls.swapLR">Swap L/R</span>
+                            </label>
+                        </div>
+                        <div class="checkbox-group hidden" id="sbs3dtvGroup">
+                            <label class="modern-checkbox">
+                                <input type="checkbox" id="sbs3dtv">
+                                <span class="checkmark"></span>
+                                <span class="label-text" data-i18n="controls.sbs3dtv">3DTV</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parallax adjustment controls -->
+                <div class="parallax-controls">
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span data-i18n="controls.parallax">Parallax (X):</span> <span id="valShiftXPx" class="value-display">0</span><span class="unit">px</span>
+                        </label>
+                        <div class="slider-with-button">
+                        <input type="range" id="shiftX" class="modern-slider" min="-0.1" max="0.1" step="0.0001" value="0">
+                            <button id="zeroShiftXBtn" class="zero-btn" data-i18n="buttons.zero">ZERO</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span data-i18n="controls.verticalShift">Vertical shift (Y):</span> <span id="valShiftYPx" class="value-display">0</span><span class="unit">px</span>
+                        </label>
+                        <div class="slider-with-button">
+                        <input type="range" id="shiftY" class="modern-slider" min="-0.1" max="0.1" step="0.0001" value="0">
+                            <button id="zeroShiftYBtn" class="zero-btn" data-i18n="buttons.zero">ZERO</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span data-i18n="controls.zoom">Zoom:</span> <span id="valScale" class="value-display">100%</span>
+                        </label>
+                        <div class="slider-with-button">
+                        <input type="range" id="scale" class="modern-slider" min="0.1" max="5.0" step="0.01" value="1.0">
+                            <button id="fitBtn" class="fit-btn" data-i18n="buttons.fit">FIT</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Alignment section (2-column) -->
+                <div class="alignment-section">
+                    <div class="alignment-header">
+                        <div class="section-title" data-i18n="controls.alignment">🎯 Auto alignment</div>
+                        <button id="autoAlignBtn" class="modern-btn primary compact-btn alignment-exec-btn" disabled data-i18n="controls.autoExecute">Run</button>
+                    </div>
+
+                    <div class="control-grid-2col">
+                        <div class="control-group compact full-span">
+                            <label for="alignAlgorithm" class="control-label small" data-i18n="controls.algorithm">Algorithm</label>
+                            <select id="alignAlgorithm" class="modern-select">
+                                <option value="orb" data-i18n="algorithms.orb_fast">ORB (fast)</option>
+                                <option value="akaze" data-i18n="algorithms.akaze_high">AKAZE (high accuracy)</option>
+                                <option value="sift" data-i18n="algorithms.sift_high">SIFT (high accuracy)</option>
+                            </select>
+                        </div>
+
+                        <!-- Depth-placement preset: where auto-alignment puts the scene
+                             relative to the screen plane. Standard straddles the screen
+                             (near content pops out); Window-safe places the nearest
+                             subject behind the screen, preventing window violations at
+                             the lateral frame edges. The explanation lives in the
+                             tooltip; the labels stay short by design. -->
+                        <div class="control-group compact full-span">
+                            <label for="depthPlacement" class="control-label small" data-i18n="controls.depthPlacement"
+                                   data-i18n-title="controls.depthPlacementHint"
+                                   title="Standard: the scene straddles the screen plane for stronger depth; near objects pop out, which can cause window violations at the left/right frame edges. Window-safe: the nearest subject is placed slightly behind the screen, so nothing pops out.">Depth placement</label>
+                            <select id="depthPlacement" class="modern-select"
+                                    data-i18n-title="controls.depthPlacementHint"
+                                    title="Standard: the scene straddles the screen plane for stronger depth; near objects pop out, which can cause window violations at the left/right frame edges. Window-safe: the nearest subject is placed slightly behind the screen, so nothing pops out.">
+                                <option value="standard" data-i18n="placement.standard">Standard</option>
+                                <option value="windowSafe" data-i18n="placement.windowSafe">Window-safe</option>
+                            </select>
+                        </div>
+
+                        <!-- Optional geometric refinement (experimental, default OFF).
+                             Adds a depth-preserving vertical-affine (rotation/zoom)
+                             correction on top of the shift-only alignment. -->
+                        <div class="control-group compact full-span">
+                            <label class="modern-checkbox" style="font-size: 11px;" data-i18n-title="controls.geometricRefineHint" title="Experimental: corrects residual roll/vertical-zoom while preserving depth. AKAZE/SIFT recommended.">
+                                <input type="checkbox" id="geometricRefineToggle">
+                                <span class="checkmark"></span>
+                                <span class="label-text" data-i18n="controls.geometricRefine">Geometric refinement (experimental)</span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Menu cards -->
+                <div class="menu-cards">
+                    <button class="menu-card" data-submenu="text-menu">
+                        <span class="card-icon">📝</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.text">Text</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+
+                    <button class="menu-card" data-submenu="image-adjust-menu">
+                        <span class="card-icon">🎨</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.imageAdjust">Image adjustments</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+
+                    <button class="menu-card" data-submenu="crop-menu">
+                        <span class="card-icon">✂️</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.crop">Crop</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+
+                    <button class="menu-card" data-submenu="export-menu">
+                        <span class="card-icon">💾</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.export">Export</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+
+                    <button class="menu-card" data-submenu="help-menu">
+                        <span class="card-icon">❓</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.help">Help</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+
+                    <button class="menu-card" data-submenu="about-menu">
+                        <span class="card-icon">ℹ️</span>
+                        <div class="card-content">
+                            <div class="card-title" data-i18n="menu.about">About</div>
+                        </div>
+                        <span class="card-arrow">›</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Open menu -->
+            <div class="menu-panel" id="open-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.openFile">Open file</h2>
+                </div>
+                <div class="menu-content">
+                    <div class="open-options">
+                        <label for="fileInput" class="open-option-card">
+                            <span class="option-icon">🖼️</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="open.stereoImage">Stereo image</div>
+                            </div>
+                        </label>
+                        <input type="file" id="fileInput" accept="image/*, .mpo, .jps" class="hidden">
+
+                        <label for="fileInputManual" class="open-option-card">
+                            <span class="option-icon">🖼️⚙️</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="open.stereoImageManual">Manual selection</div>
+                            </div>
+                        </label>
+                        <input type="file" id="fileInputManual" accept="image/*, .mpo, .jps" class="hidden">
+
+                        <button id="openDualImagesBtn" class="open-option-card">
+                            <span class="option-icon">🖼️🖼️</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="open.dualImages">Left/right images</div>
+                            </div>
+                        </button>
+
+                        <button id="openUrlBtn" class="open-option-card">
+                            <span class="option-icon">🌐</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="open.openUrl">Open from URL</div>
+                            </div>
+                        </button>
+
+                        <button id="openViewerModeBtn" class="open-option-card open-option-separator">
+                            <span class="option-icon">▶️</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="open.viewerMode">Viewer</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language selection menu -->
+            <div class="menu-panel" id="language-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.language">Select language</h2>
+                </div>
+                <div class="menu-content">
+                    <div class="language-options">
+                        <button class="language-option-card" data-language="ja">
+                            <span class="option-icon">🇯🇵</span>
+                            <div class="option-content">
+                                <div class="option-title" data-i18n="languages.japanese">Japanese</div>
+                            </div>
+                        </button>
+                        <button class="language-option-card" data-language="en">
+                            <span class="option-icon">🇬🇧</span>
+                            <div class="option-content">
+                                <div class="option-title">English</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Text menu -->
+            <div class="menu-panel" id="text-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.textOverlay">Text overlay</h2>
+                </div>
+                <div class="menu-content">
+                    <div class="control-group">
+                        <input type="text" id="textString" class="modern-input" placeholder="Enter a title..." data-i18n="[placeholder]controls.placeholder.enterTitle">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label"><span data-i18n="controls.textParallax">Parallax:</span> <span id="valTextParallax" class="value-display">0.02</span></label>
+                        <input type="range" id="textParallax" class="modern-slider" min="-0.1" max="0.1" step="0.001" value="0.02">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label"><span data-i18n="controls.rotation">Rotation:</span> <span id="valTextRotation" class="value-display">0</span>°</label>
+                        <input type="range" id="textRotation" class="modern-slider" min="-180" max="180" step="1" value="0">
+                    </div>
+
+                    <div class="grouped-control-card">
+                        <!-- 3D effect (additional) -->
+                        <div class="control-group grouped-control-item">
+                            <label class="control-label small" data-i18n="controls.effect3d">3D effect</label>
+                            <select id="textEffect" class="modern-select">
+                                <option value="none" data-i18n="effects.none">None</option>
+                                <option value="concave" data-i18n="effects.concave">Concave curve</option>
+                                <option value="convex" data-i18n="effects.convex">Convex curve</option>
+                                <option value="swing_front" data-i18n="effects.swing_front">Forward swing</option>
+                                <option value="swing_back" data-i18n="effects.swing_back">Backward swing</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group grouped-control-item" id="effectStrengthControl">
+                            <label class="control-label"><span data-i18n="controls.effectStrength">Effect strength:</span> <span id="valEffectStrength" class="value-display">50</span>%</label>
+                            <input type="range" id="textEffectStrength" class="modern-slider" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                    </div>
+
+
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label class="control-label small" data-i18n="controls.size">Size</label>
+                            <input type="number" id="textSize" class="modern-input small" value="48" min="10" max="200">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label small" data-i18n="controls.stroke">Stroke</label>
+                            <input type="number" id="textStroke" class="modern-input small" value="0" min="0" max="20" step="0.5">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label small" data-i18n="controls.color">Color</label>
+                            <input type="color" id="textColor" class="modern-input small" value="#cccccc">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label small" data-i18n="controls.horizontalPosition">Horizontal position</label>
+                        <input type="range" id="textX" class="modern-slider" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label small" data-i18n="controls.verticalPosition">Vertical position</label>
+                        <input type="range" id="textY" class="modern-slider" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <button id="resetTextBtn" class="modern-btn secondary" data-i18n="controls.textReset">Reset text</button>
+                    <button id="applyTextBtn" class="modern-btn primary" data-i18n="controls.textUpdate">Update text</button>
+                </div>
+            </div>
+
+            <!-- Image quality adjustment menu -->
+            <div class="menu-panel" id="image-adjust-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.imageAdjust">Image adjustments</h2>
+                </div>
+                <div class="menu-content linked" id="image-adjust-content">
+                    <!-- Global option: link L/R adjustments -->
+                    <label class="link-lr-toggle">
+                        <input type="checkbox" id="linkLRToggle" checked>
+                        <span data-i18n="controls.linkLR">🔗 Link L/R</span>
+                    </label>
+
+                    <!-- Color correction section -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.colorCorrection">🎨 Color correction</div>
+
+                        <!-- Brightness -->
+                        <div class="quality-param" data-param="brightness">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.brightness">Brightness</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="brightness" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="brightnessL" class="modern-slider" min="-1.0" max="1.0" step="0.01" value="0">
+                                    <input type="number" id="brightnessL-num" class="modern-input small quality-number-input" min="-1.0" max="1.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.brightness">Brightness</span></span>
+                                    <button class="param-reset-btn" data-reset-param="brightness" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="brightnessR" class="modern-slider" min="-1.0" max="1.0" step="0.01" value="0">
+                                    <input type="number" id="brightnessR-num" class="modern-input small quality-number-input" min="-1.0" max="1.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contrast -->
+                        <div class="quality-param" data-param="contrast">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.contrast">Contrast</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="contrast" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="contrastL" class="modern-slider" min="0.0" max="2.0" step="0.01" value="1.0">
+                                    <input type="number" id="contrastL-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="1.00">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.contrast">Contrast</span></span>
+                                    <button class="param-reset-btn" data-reset-param="contrast" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="contrastR" class="modern-slider" min="0.0" max="2.0" step="0.01" value="1.0">
+                                    <input type="number" id="contrastR-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="1.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Saturation -->
+                        <div class="quality-param" data-param="saturation">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.saturation">Saturation</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="saturation" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="saturationL" class="modern-slider" min="0.0" max="2.0" step="0.01" value="1.0">
+                                    <input type="number" id="saturationL-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="1.00">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.saturation">Saturation</span></span>
+                                    <button class="param-reset-btn" data-reset-param="saturation" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="saturationR" class="modern-slider" min="0.0" max="2.0" step="0.01" value="1.0">
+                                    <input type="number" id="saturationR-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="1.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hue -->
+                        <div class="quality-param" data-param="hue">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.hue">Hue</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="hue" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="hueL" class="modern-slider" min="-180" max="180" step="1" value="0">
+                                    <input type="number" id="hueL-num" class="modern-input small quality-number-input" min="-180" max="180" step="1" value="0">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.hue">Hue</span></span>
+                                    <button class="param-reset-btn" data-reset-param="hue" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="hueR" class="modern-slider" min="-180" max="180" step="1" value="0">
+                                    <input type="number" id="hueR-num" class="modern-input small quality-number-input" min="-180" max="180" step="1" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter section -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.filters">🔍 Filters</div>
+
+                        <!-- Sharpness -->
+                        <div class="quality-param" data-param="sharpness">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.sharpness">Sharpness</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="sharpness" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="sharpnessL" class="modern-slider" min="0.0" max="2.0" step="0.01" value="0">
+                                    <input type="number" id="sharpnessL-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.sharpness">Sharpness</span></span>
+                                    <button class="param-reset-btn" data-reset-param="sharpness" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="sharpnessR" class="modern-slider" min="0.0" max="2.0" step="0.01" value="0">
+                                    <input type="number" id="sharpnessR-num" class="modern-input small quality-number-input" min="0.0" max="2.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Noise reduction -->
+                        <div class="quality-param" data-param="noiseReduction">
+                            <div class="quality-row quality-row-l">
+                                <div class="quality-row-header">
+                                    <span class="quality-label">
+                                        <span class="label-prefix"><span data-i18n="labels.leftShort">L</span>: </span><span data-i18n="controls.noiseReduction">Noise reduction</span>
+                                    </span>
+                                    <button class="param-reset-btn" data-reset-param="noiseReduction" data-reset-side="L" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="noiseReductionL" class="modern-slider" min="0.0" max="1.0" step="0.01" value="0">
+                                    <input type="number" id="noiseReductionL-num" class="modern-input small quality-number-input" min="0.0" max="1.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                            <div class="quality-row quality-row-r">
+                                <div class="quality-row-header">
+                                    <span class="quality-label"><span data-i18n="labels.rightShort">R</span>: <span data-i18n="controls.noiseReduction">Noise reduction</span></span>
+                                    <button class="param-reset-btn" data-reset-param="noiseReduction" data-reset-side="R" data-i18n-title="controls.resetParam" title="Reset">⟲</button>
+                                </div>
+                                <div class="quality-row-body">
+                                    <input type="range" id="noiseReductionR" class="modern-slider" min="0.0" max="1.0" step="0.01" value="0">
+                                    <input type="number" id="noiseReductionR-num" class="modern-input small quality-number-input" min="0.0" max="1.0" step="0.01" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto adjustment and histogram -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.autoAdjust">📊 Auto adjust</div>
+
+                        <!-- Linked: single auto-correction button -->
+                        <div class="control-group auto-levels-linked">
+                            <button id="autoLevelsBtn" class="modern-btn primary compact-btn" data-i18n="controls.autoCorrection">Auto correction</button>
+                        </div>
+
+                        <!-- Unlinked: separate L/R auto-correction buttons -->
+                        <div class="control-grid-2col auto-levels-unlinked">
+                            <div class="control-group compact">
+                                <button id="autoLevelsLBtn" class="modern-btn primary compact-btn" data-i18n="controls.autoCorrectionLeft">L: Auto correction</button>
+                            </div>
+                            <div class="control-group compact">
+                                <button id="autoLevelsRBtn" class="modern-btn primary compact-btn" data-i18n="controls.autoCorrectionRight">R: Auto correction</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="showHistogramPanelBtn" class="modern-btn secondary" data-i18n="controls.showHistogram">Show histogram</button>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="resetColorAdjustBtn" class="modern-btn secondary" data-i18n="controls.resetAll">Reset all</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop menu -->
+            <div class="menu-panel" id="crop-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.crop">Crop</h2>
+                </div>
+                <div class="menu-content">
+                    <!-- Auto crop -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.autoCrop">✂️ Auto crop</div>
+                        <div class="control-group">
+                            <p class="control-hint" data-i18n="crop.autoCropHint">Remove margins after alignment</p>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="manualCropBtn" class="modern-btn primary" data-i18n="controls.executeCrop">Run crop</button>
+                        </div>
+                    </div>
+
+                    <!-- Rectangular selection crop -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.rectangularCrop">🔲 Rectangular crop</div>
+
+                        <!-- Crop mode selection -->
+                        <div class="control-group" style="margin-bottom: 10px;">
+                            <label class="control-label" style="margin-bottom: 6px;" data-i18n="crop.mode">Mode:</label>
+                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="radio" name="cropRectMode" value="free" checked style="margin-right: 6px;">
+                                    <span data-i18n="crop.modeFree">Free</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="radio" name="cropRectMode" value="aspectRatio" style="margin-right: 6px;">
+                                    <span data-i18n="crop.modeAspectRatio">Fixed aspect ratio</span>
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="radio" name="cropRectMode" value="fixedSize" style="margin-right: 6px;">
+                                    <span data-i18n="crop.modeFixedSize">Fixed size</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Fixed aspect ratio mode settings -->
+                        <div id="aspectRatioSettings" class="control-group" style="display: none; margin-bottom: 10px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <label class="control-label" style="font-size: 11px; margin-bottom: 4px;" data-i18n="crop.aspectRatioLabel">Aspect ratio (width:height):</label>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <input type="number" id="cropAspectWidth" min="1" max="9999" value="16" style="width: 60px; padding: 4px; font-size: 12px;">
+                                <span style="color: var(--text-secondary);">:</span>
+                                <input type="number" id="cropAspectHeight" min="1" max="9999" value="9" style="width: 60px; padding: 4px; font-size: 12px;">
+                            </div>
+                        </div>
+
+                        <!-- Fixed size mode settings (even pixels only) -->
+                        <div id="fixedSizeSettings" class="control-group" style="display: none; margin-bottom: 10px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 4px;">
+                            <label class="control-label" style="font-size: 11px; margin-bottom: 4px;" data-i18n="crop.fixedSizeLabel">Size (width x height):</label>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <input type="number" id="cropFixedWidth" min="2" max="9998" step="2" value="1920" style="width: 70px; padding: 4px; font-size: 12px;">
+                                <span style="color: var(--text-secondary);">x</span>
+                                <input type="number" id="cropFixedHeight" min="2" max="9998" step="2" value="1080" style="width: 70px; padding: 4px; font-size: 12px;">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <button id="toggleCropSelectionBtn" class="modern-btn secondary" data-i18n="controls.rectangularMode">Rectangular selection mode</button>
+                        </div>
+
+                        <!-- Selection info display -->
+                        <div id="cropSelectionInfo" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 4px; font-size: 11px;">
+                            <div style="margin-bottom: 4px;">
+                                <span style="color: var(--text-secondary);" data-i18n="crop.selectionInfo">Selection:</span>
+                                <span id="cropSelectionCoords" style="color: var(--accent-blue);">-</span>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-secondary);" data-i18n="crop.selectionSize">Size:</span>
+                                <span id="cropSelectionSize" style="color: var(--accent-blue);">-</span>
+                            </div>
+                        </div>
+
+                        <div class="control-grid" id="cropSelectionActions" style="display: none; margin-top: 10px;">
+                            <button id="applyCropSelectionBtn" class="modern-btn primary" data-i18n="crop.apply">Apply</button>
+                            <button id="clearCropSelectionBtn" class="modern-btn secondary" data-i18n="crop.clear">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Reset crop (common) -->
+                    <div class="adjustment-section">
+                        <div class="control-group">
+                            <button id="resetAllCropBtn" class="modern-btn secondary" style="opacity: 0.5;" disabled data-i18n="controls.removeCrop">Remove crop</button>
+                            <p class="control-hint" style="margin-top: 5px; font-size: 10px;" data-i18n="crop.removeAllHint">Remove all crops</p>
+                        </div>
+                    </div>
+
+                    <!-- Grid display -->
+                    <div class="adjustment-section">
+                        <div class="section-title" data-i18n="sections.gridDisplay">📏 Grid display</div>
+                        <div class="checkbox-group">
+                            <label class="modern-checkbox">
+                                <input type="checkbox" id="gridEnabled">
+                                <span class="checkmark"></span>
+                                <span class="label-text" data-i18n="controls.gridDisplay">Grid display</span>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span data-i18n="controls.density">Density:</span> <span id="valGridDensity" class="value-display">10</span>
+                            </label>
+                            <input type="range" id="gridDensity" class="modern-slider" min="2" max="50" step="1" value="10">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="controls.color">Color</label>
+                            <div class="color-selector">
+                                <button class="color-option" data-color="#ffffff" style="background: #ffffff;" data-i18n="[title]colors.white"></button>
+                                <button class="color-option" data-color="#ff0000" style="background: #ff0000;" data-i18n="[title]colors.red"></button>
+                                <button class="color-option" data-color="#00ff00" style="background: #00ff00;" data-i18n="[title]colors.green"></button>
+                                <button class="color-option" data-color="#0000ff" style="background: #0000ff;" data-i18n="[title]colors.blue"></button>
+                                <button class="color-option" data-color="#ffff00" style="background: #ffff00;" data-i18n="[title]colors.yellow"></button>
+                                <button class="color-option" data-color="#ff00ff" style="background: #ff00ff;" data-i18n="[title]colors.magenta"></button>
+                                <button class="color-option" data-color="#00ffff" style="background: #00ffff;" data-i18n="[title]colors.cyan"></button>
+                                <button class="color-option active" data-color="#888888" style="background: #888888;" data-i18n="[title]colors.gray"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Export menu -->
+            <div class="menu-panel" id="export-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.exportSettings">Export settings</h2>
+                </div>
+                <div class="menu-content">
+                    <!-- Output resolution display -->
+                    <div class="info-card compact">
+                        <div class="info-row">
+                            <span class="info-label" data-i18n="controls.outputResolution">Output resolution:</span>
+                            <span id="exportResolution" class="info-value highlight" data-i18n-skip>- x -</span>
+                        </div>
+                    </div>
+
+                    <!-- Downscaling options -->
+                    <div class="checkbox-group">
+                        <label class="modern-checkbox">
+                            <input type="checkbox" id="enableResize">
+                            <span class="checkmark"></span>
+                            <span class="label-text" data-i18n="controls.enableResize">Save resized</span>
+                        </label>
+                    </div>
+
+                    <div id="resizeOptions" class="hidden">
+                        <!-- Resize mode toggle -->
+                        <div class="control-group">
+                            <div class="resize-mode-toggle">
+                                <button type="button" id="resizeModeScale" class="resize-mode-btn active" data-i18n="controls.resizeModeScale">Scale</button>
+                                <button type="button" id="resizeModePixel" class="resize-mode-btn" data-i18n="controls.resizeModePixel">Width</button>
+                            </div>
+                        </div>
+
+                        <!-- Scale mode controls -->
+                        <div id="resizeScaleGroup" class="control-group">
+                            <label for="resizeScale" class="control-label">
+                                <span data-i18n="controls.resizeScale">Resize scale:</span>
+                                <span id="valResizeScale" class="value-display">50</span>%
+                            </label>
+                            <input type="range" id="resizeScale" class="modern-slider"
+                            min="0.1" max="1.0" step="0.05" value="0.5">
+                        </div>
+
+                        <!-- Pixel mode controls -->
+                        <div id="resizePixelGroup" class="control-group hidden">
+                            <label for="resizeTargetWidth" class="control-label">
+                                <span data-i18n="controls.resizeTargetWidth">Width (px):</span>
+                                <span id="resizeTargetWidthMax" class="value-display"></span>
+                            </label>
+                            <input type="number" id="resizeTargetWidth" class="modern-input small"
+                            min="2" step="2" placeholder="1920">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="resizeAlgorithm" class="control-label" data-i18n="controls.resizeAlgorithm">Resize algorithm</label>
+                            <select id="resizeAlgorithm" class="modern-select">
+                                <option value="lanczos" selected data-i18n="controls.algoLanczos">Best quality (Lanczos)</option>
+                                <option value="high" data-i18n="controls.algoHigh">High quality (Bicubic)</option>
+                                <option value="medium" data-i18n="controls.algoMedium">Standard (Bilinear)</option>
+                                <option value="low" data-i18n="controls.algoLow">Fast (Nearest)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Border decoration option (visible only in modes 8/9/12/13) -->
+                    <div id="borderDecorationGroup" class="checkbox-group hidden">
+                        <label class="modern-checkbox">
+                            <input type="checkbox" id="enableBorderDecoration">
+                            <span class="checkmark"></span>
+                            <span class="label-text" data-i18n="controls.enableBorderDecoration">Add Borders</span>
+                        </label>
+                    </div>
+
+                    <!-- Preserve EXIF option (applies to JPEG/MPO output) -->
+                    <div class="checkbox-group">
+                        <label class="modern-checkbox">
+                            <input type="checkbox" id="preserveExif" checked>
+                            <span class="checkmark"></span>
+                            <span class="label-text" data-i18n="controls.preserveExif">Preserve EXIF (JPEG/MPO)</span>
+                        </label>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="outputFileName" class="control-label" data-i18n="controls.fileName">File name</label>
+                        <input type="text" id="outputFileName" class="modern-input" value="stereo_image">
+                    </div>
+
+                    <!-- Mode name suffix (checkbox + display) -->
+                    <div class="control-group">
+                        <div class="checkbox-group" style="margin-bottom: 5px;">
+                            <label class="modern-checkbox">
+                                <input type="checkbox" id="addSuffix" checked>
+                                <span class="checkmark"></span>
+                                <span class="label-text" data-i18n="controls.addModeSuffix">Add mode suffix</span>
+                            </label>
+                        </div>
+                        <input type="text" id="modeSuffixDisplay" class="modern-input" readonly
+                        style="background: var(--bg-tertiary); color: var(--text-secondary);">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="saveFormat" class="control-label" data-i18n="controls.format">Format</label>
+                        <select id="saveFormat" class="modern-select">
+                            <option value="image/png">PNG</option>
+                            <option value="image/jpeg">JPEG</option>
+                            <option value="image/webp">WebP</option>
+                            <option value="image/bmp">BMP</option>
+                            <option value="image/tiff">TIFF</option>
+                            <option value="image/mpo" data-i18n="controls.formatMpo">MPO (stereo)</option>
+                        </select>
+                    </div>
+
+                    <!-- Quality settings (shown only for JPEG/WebP/MPO) -->
+                    <div class="control-group" id="qualityControl" style="display: none">
+                        <label class="control-label">
+                            <span data-i18n="controls.quality">Quality:</span> <span id="valQuality" class="value-display">95</span>%
+                        </label>
+                        <input type="range" id="saveQuality" class="modern-slider"
+                        min="0.1" max="1.0" step="0.01" value="0.95">
+                    </div>
+
+                    <!-- Save button -->
+                    <div class="control-group">
+                        <button id="saveBtn" class="modern-btn primary" data-i18n="controls.saveImage">💾 Save image</button>
+                    </div>
+
+                    <!-- Clipboard export (shown only in external image mode) -->
+                    <div id="clipboardExportSection" class="grouped-control-card clipboard-export-section" style="display: none; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px;">
+                        <div class="section-title clipboard-export-title" data-i18n="controls.clipboardExport">📋 Copy to clipboard</div>
+                        <div class="control-group grouped-control-item">
+                            <button id="exportClipboardListBtn" class="modern-btn secondary" data-i18n="controls.exportListFormat">List format</button>
+                        </div>
+                        <div class="control-group grouped-control-item">
+                            <button id="exportClipboardViewerBtn" class="modern-btn secondary" data-i18n="controls.exportViewerFormat">Viewer format (URL)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help menu -->
+            <div class="menu-panel" id="help-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.operations">How to use</h2>
+                </div>
+                <div class="menu-content">
+                    <h3 class="help-heading" data-i18n="help.basic">Basic controls</h3>
+                    <div class="help-section">
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.leftDrag">Left drag</div>
+                            <div class="help-desc" data-i18n="help.leftDragDesc">Pan image (move)</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.wheel">Wheel</div>
+                            <div class="help-desc" data-i18n="help.wheelDesc">Zoom in/out</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.arrowKeys">Arrow keys</div>
+                            <div class="help-desc" data-i18n="help.arrowKeysDesc">Alignment adjustment (1px)</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.shiftArrow">Shift + Arrow</div>
+                            <div class="help-desc" data-i18n="help.shiftArrowDesc">Alignment adjustment (10px)</div>
+                        </div>
+                        <div class="help-note" data-i18n="help.arrowNote">Note: arrow keys are always reserved for alignment</div>
+                    </div>
+
+                    <h3 class="help-heading" data-i18n="help.rectangularCrop">Rectangular crop</h3>
+                    <div class="help-section">
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.leftDrag">Left drag</div>
+                            <div class="help-desc" data-i18n="help.cropSelectionDesc">Select area (selection mode)</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.rightDrag">Right drag</div>
+                            <div class="help-desc" data-i18n="help.rightDragDesc">Pan image (selection mode)</div>
+                        </div>
+                        <div class="help-note" data-i18n="help.rectangularNote">Note: available only in overlay modes (e.g., anaglyph)</div>
+                    </div>
+
+                    <h3 class="help-heading" data-i18n="help.pointer3d">3D Pointer</h3>
+                    <div class="help-section">
+                        <div class="help-item">
+                            <div class="help-key">D</div>
+                            <div class="help-desc" data-i18n="help.pointer3dToggleDesc">Toggle 3D Pointer mode</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.mouseMove">Mouse move</div>
+                            <div class="help-desc" data-i18n="help.pointer3dMoveDesc">Move the pointer over the image</div>
+                        </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.ctrlWheel">Ctrl + Wheel</div>
+                            <div class="help-desc" data-i18n="help.pointer3dDepthDesc">Adjust 3D Pointer depth</div>
+                        </div>
+                        <div class="help-note" data-i18n="help.pointer3dNote">Note: also available in viewer mode</div>
+                    </div>
+
+                    <h3 class="help-heading" data-i18n="help.hints">Tips</h3>
+                    <div class="help-section">
+                        <div class="help-hint" data-i18n="help.hint1">• Open images by drag and drop</div>
+                        <div class="help-hint" data-i18n="help.hint2">• FIT button auto-zooms to fit the screen</div>
+                        <div class="help-hint" data-i18n="help.hint3">• ZERO button resets alignment</div>
+                        <div class="help-hint" data-i18n="help.hint4">• Image adjustments update in real time while the histogram is shown</div>
+                        <div class="help-hint" data-i18n="help.hint5">• After cropping, use “Remove crop” to revert</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About menu -->
+            <div class="menu-panel" id="about-menu">
+                <div class="menu-header">
+                    <button class="back-btn" data-back="main-menu">‹</button>
+                    <h2 data-i18n="menu.about">About</h2>
+                </div>
+                <div class="menu-content">
+                    <div class="about-section">
+                        <h3 id="aboutAppName" style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: var(--text-primary);"></h3>
+                        <div id="buildInfo" style="display: none; font-size: 10px; color: var(--text-secondary); margin: 0 0 10px 0; text-align: center;"></div>
+                        <div style="display: flex; justify-content: center; margin: 0 0 15px 0;">
+                            <img src="icons/icon-192x192.png" alt="Sphyrnidae icon" style="width: 96px; height: 96px; border-radius: 12px;">
+                        </div>
+
+                        <div style="padding: 12px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 15px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                                <strong>License:</strong>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 10px;">
+                                MIT License
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">
+                                <strong>Repository:</strong>
+                            </div>
+                            <a id="repoLink" href="" target="_blank" rel="noopener noreferrer" style="display: inline-block; font-size: 12px; color: var(--accent-blue); text-decoration: none; word-break: break-all; margin-bottom: 10px;"></a>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">
+                                <strong>Libraries:</strong>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; font-size: 11px; color: var(--text-secondary); line-height: 1.8;">
+                                <li>Three.js - 3D graphics library (MIT)</li>
+                                <li>OpenCV.js - Computer vision library (Apache-2.0)</li>
+                                <li>i18next - Internationalization (MIT)</li>
+                                <li>ExifReader - EXIF metadata parser (MPL-2.0)</li>
+                                <li>pako - zlib/deflate (de)compression (MIT)</li>
+                                <li>gif.js - Animated GIF encoder (MIT)</li>
+                                <li>UPNG.js - PNG/APNG encoder &amp; decoder (MIT)</li>
+                                <li>wasm-feature-detect - WebAssembly feature detection (Apache-2.0)</li>
+                            </ul>
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; line-height: 1.6;">
+                                Full third-party license texts and attributions are listed in
+                                <a id="noticesLink" href="" target="_blank" rel="noopener noreferrer" style="color: var(--accent-blue); text-decoration: none;">THIRD-PARTY-NOTICES.md</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <!-- Rectangle selection overlay -->
+        <div id="crop-selection-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 999;">
+            <div id="crop-selection-rect" style="position: absolute; background: transparent;"></div>
+        </div>
+        <!-- Renderer status / error overlay. Shown by renderer.js (WebGL context
+             lost/restored), ui.js (render-error-threshold retry) and histogram.js
+             (auto-levels failure). Hidden by default; those handlers toggle display
+             and inject the retry button. -->
+        <div id="renderStatus" role="status" aria-live="polite" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 80%; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); color: #fff; border-radius: 8px; text-align: center; font-size: 14px;"></div>
+    </div>
+    </div><!-- /app-layout -->
+
+    <!-- Subresource Integrity for the three.js ES module and its three.core.min.js
+         chunk, which three.module.min.js imports at runtime (sha384, computed from the
+         npm three@0.182.0 package like the other CDN SRI hashes above). Both build URLs
+         must also appear in the CSP script-src above, or the browser blocks the core
+         chunk's sub-request. Import-map integrity is enforced on supporting browsers
+         (Chromium 127+, Safari 18.4+) and safely ignored elsewhere, so it never blocks
+         loading. The CSP script-src sha256 above hashes this exact importmap text and
+         must be updated together. -->
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js"},"integrity":{"https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js":"sha384-p1ZOoQAcPr+h/NyOSe+fUxSgdqlYUjx8qXXjLIrxtrQmXCPVweciHj1lRfxTnEh/","https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js":"sha384-4cNy6bPuAKpr1lghYPZZiz2sVR9/3KO82Clzopr9CVYPnu+DT8xl7Q5qynfzXQMF"}}</script>
+    <!-- Load configuration files before other scripts -->
+    <!-- debug-config.js: Sets DEBUG_MODE and DEBUG_ENABLED for logging control -->
+    <script src="./debug-config.js"></script>
+    <!-- version-config.js: Sets APP_VERSION for version display -->
+    <script src="./version-config.js"></script>
+    <script type="module" src="./js/i18n.js"></script>
+    <script type="module" src="./js/main.js"></script>
+
+    <!-- Left/right image selection dialog -->
+    <div id="dualImageDialog" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="dualImageDialogTitle">
+            <div class="modal-header">
+                <h2 id="dualImageDialogTitle" data-i18n="dialog.dualImages.title">Open left/right images</h2>
+                <button id="closeDualDialogBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="dual-file-section">
+                    <label class="dual-file-label">
+                        <input type="file" id="fileInputLeft" accept="image/*" class="hidden">
+                        <span data-i18n="dialog.dualImages.selectLeft">📁 Select left-eye image</span>
+                    </label>
+                    <div id="leftFileName" class="file-name-display" data-i18n="dialog.dualImages.notSelected">(Not selected)</div>
+                </div>
+
+                <div class="dual-file-section">
+                    <label class="dual-file-label">
+                        <input type="file" id="fileInputRight" accept="image/*" class="hidden">
+                        <span data-i18n="dialog.dualImages.selectRight">📁 Select right-eye image</span>
+                    </label>
+                    <div id="rightFileName" class="file-name-display" data-i18n="dialog.dualImages.notSelected">(Not selected)</div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="cancelDualBtn" class="btn btn-secondary" data-i18n="dialog.dualImages.cancel">Cancel</button>
+                    <button id="loadDualImagesBtn" class="btn btn-primary" disabled data-i18n="dialog.dualImages.load">Load</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Open from URL dialog -->
+    <div id="openUrlDialog" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="openUrlDialogTitle" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="openUrlDialogTitle" data-i18n="dialog.openUrl.title">Open from URL</h2>
+                <button id="closeUrlDialogBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="urlInput" data-i18n="dialog.openUrl.urlLabel">Image URL</label>
+                    <input type="url" id="urlInput" class="modern-input" style="width: 100%; margin-top: 6px;"
+                        data-i18n="[placeholder]dialog.openUrl.urlPlaceholder" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="form-group">
+                    <label for="urlFormatSelect" data-i18n="dialog.openUrl.format">Format</label>
+                    <select id="urlFormatSelect" class="modern-select" style="width: 100%; margin-top: 6px;">
+                        <option value="" data-i18n="dialog.openUrl.autoDetect">Auto Detect</option>
+                        <option value="full_sbs" data-i18n="dialog.formatSelect.full_sbs">Side-by-Side (Full)</option>
+                        <option value="half_sbs" data-i18n="dialog.formatSelect.half_sbs">Side-by-Side (Half)</option>
+                        <option value="full_tab" data-i18n="dialog.formatSelect.full_tab">Top-and-Bottom (Full)</option>
+                        <option value="half_tab" data-i18n="dialog.formatSelect.half_tab">Top-and-Bottom (Half)</option>
+                        <option value="interlace_h" data-i18n="dialog.formatSelect.interlace_h">Interlace (H)</option>
+                        <option value="interlace_v" data-i18n="dialog.formatSelect.interlace_v">Interlace (V)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelUrlDialogBtn" class="btn btn-secondary" data-i18n="dialog.openUrl.cancel">Cancel</button>
+                <button id="loadUrlBtn" class="btn btn-primary" disabled data-i18n="dialog.openUrl.load">Load</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stereo format selection dialog -->
+    <div id="formatSelectDialog" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="formatSelectDialogTitle">
+            <div class="modal-header">
+                <h2 id="formatSelectDialogTitle" data-i18n="dialog.formatSelect.title">Select stereo image format</h2>
+                <button id="closeFormatDialogBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: var(--text-secondary); font-size: 13px;" data-i18n="dialog.formatSelect.description">Select the stereo format for this image:</p>
+
+                <div class="format-options">
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="full_sbs" checked>
+                        <span class="format-label" data-i18n="dialog.formatSelect.full_sbs">Side-by-Side (Full)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.full_sbs_desc">Left/right images are side by side</span>
+                    </label>
+
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="half_sbs">
+                        <span class="format-label" data-i18n="dialog.formatSelect.half_sbs">Side-by-Side (Half)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.half_sbs_desc">Left/right images are side by side and horizontally compressed</span>
+                    </label>
+
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="full_tab">
+                        <span class="format-label" data-i18n="dialog.formatSelect.full_tab">Top-and-Bottom (Full)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.full_tab_desc">Left/right images are stacked vertically (left on top)</span>
+                    </label>
+
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="half_tab">
+                        <span class="format-label" data-i18n="dialog.formatSelect.half_tab">Top-and-Bottom (Half)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.half_tab_desc">Left/right images are stacked vertically and vertically compressed</span>
+                    </label>
+
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="interlace_h">
+                        <span class="format-label" data-i18n="dialog.formatSelect.interlace_h">Interlace (horizontal)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.interlace_h_desc">Left/right images alternate horizontally</span>
+                    </label>
+
+                    <label class="format-option">
+                        <input type="radio" name="stereoFormat" value="interlace_v">
+                        <span class="format-label" data-i18n="dialog.formatSelect.interlace_v">Interlace (vertical)</span>
+                        <span class="format-desc" data-i18n="dialog.formatSelect.interlace_v_desc">Left/right images alternate vertically</span>
+                    </label>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="cancelFormatBtn" class="btn btn-secondary" data-i18n="dialog.formatSelect.cancel">Cancel</button>
+                    <button id="loadWithFormatBtn" class="btn btn-primary" data-i18n="dialog.formatSelect.load">Load</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer mode file selection dialog -->
+    <div id="viewerModeDialog" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="viewerModeDialogTitle" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="viewerModeDialogTitle" data-i18n="viewer.startViewerTitle">Start Viewer Mode</h2>
+                <button id="closeViewerDialogBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;" data-i18n="viewer.startViewerDesc">Select one of the following methods to load images for viewer mode:</p>
+
+                <!-- Privacy Notice -->
+                <div style="background-color: rgba(76, 175, 80, 0.1); border-left: 3px solid #4CAF50; padding: 12px 16px; margin-bottom: 20px; border-radius: 4px;">
+                    <div style="font-size: 12px; color: var(--text-primary);" data-i18n="viewer.privacyNotice">* Files are not uploaded and are processed locally in your browser</div>
+                </div>
+
+                <!-- 1. Drag and Drop -->
+                <div id="viewerDragDropArea" style="border: 2px dashed var(--accent-blue); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 16px; cursor: pointer; transition: background-color 0.2s;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">1️⃣</div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;" data-i18n="viewer.dragDropTitle">Drag and drop images</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);" data-i18n="viewer.dragDropDesc">Drop image files here</div>
+                    <input type="file" id="viewerDragDropInput" multiple accept="image/*, .mpo, .jps" class="hidden">
+                </div>
+
+                <!-- 2-3. File / Folder Selection -->
+                <div class="viewer-card-grid">
+                    <div class="viewer-source-card viewer-source-card-compact" id="viewerFileSelectCard">
+                        <div class="viewer-source-icon">2️⃣</div>
+                        <div class="viewer-source-title" data-i18n="viewer.selectFiles">Select files</div>
+                        <input type="file" id="viewerFileInput" multiple accept="image/*, .mpo, .jps" class="hidden">
+                    </div>
+
+                    <div class="viewer-source-card viewer-source-card-compact" id="viewerFolderSelectCard">
+                        <div class="viewer-source-icon">3️⃣</div>
+                        <div class="viewer-source-title" data-i18n="viewer.selectFolder">Select folder</div>
+                        <input type="file" id="viewerFolderInput" webkitdirectory directory class="hidden">
+                    </div>
+                </div>
+
+                <!-- 4. URL List Input -->
+                <div class="viewer-group-card">
+                    <div class="viewer-group-title">4️⃣ <span data-i18n="viewer.urlListLabel">URL List</span></div>
+                    <textarea id="viewerUrlList" class="modern-input" style="width: 100%; margin-bottom: 8px; font-size: 12px;" rows="4"
+                        data-i18n="[placeholder]viewer.urlListPlaceholder"
+                        placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg format=full_sbs"></textarea>
+                    <div style="font-size: 11px; color: var(--text-secondary);" data-i18n="viewer.urlListDesc">Enter one URL per line</div>
+                </div>
+
+                <!-- 5. Load URL List from File -->
+                <div class="viewer-group-card">
+                    <div class="viewer-group-title">5️⃣ <span data-i18n="viewer.loadUrlListFile">Load URL list from file</span></div>
+                    <button id="viewerLoadUrlListBtn" class="btn btn-secondary" style="width: 100%;" data-i18n="viewer.loadUrlListFile">📄 Load from file (.txt)</button>
+                    <input type="file" id="viewerUrlListFileInput" accept=".txt" class="hidden">
+                </div>
+
+                <div id="viewerSelectedInfo" class="viewer-selected-info hidden"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelViewerDialogBtn" class="btn btn-secondary" data-i18n="dialog.cancel">Cancel</button>
+                <button id="startViewerBtn" class="btn btn-primary" disabled data-i18n="viewer.start">Start viewer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer mode bottom control bar -->
+    <div id="viewer-mode-bar" class="viewer-mode-bar hidden">
+        <div class="viewer-controls">
+            <button id="viewerPrevBtn" class="viewer-btn" data-i18n-title="viewer.buttonPrev" title="Previous">⬅</button>
+
+            <div class="viewer-display-mode">
+                <select id="viewerDisplayMode" class="modern-select" data-i18n-title="controls.displayMode" title="Display mode" style="padding: 4px 8px; font-size: 12px;">
+                    <option value="0" data-i18n="displayModes.anaglyph_red_blue">Anaglyph (red/cyan)</option>
+                    <option value="11" data-i18n="displayModes.anaglyph_gray">Anaglyph (gray)</option>
+                    <option value="14" data-i18n="displayModes.anaglyph_blue_yellow">Anaglyph (blue/yellow)</option>
+                    <option value="15" data-i18n="displayModes.anaglyph_dubois">Anaglyph (Dubois)</option>
+                    <option value="1" data-i18n="displayModes.interlace_h">Interlace (horizontal)</option>
+                    <option value="2" data-i18n="displayModes.interlace_v">Interlace (vertical)</option>
+                    <option value="7" data-i18n="displayModes.half_sbs">Half SBS</option>
+                    <option value="8" data-i18n="displayModes.parallel">Parallel view</option>
+                    <option value="9" data-i18n="displayModes.cross">Cross view</option>
+                    <option value="12" data-i18n="displayModes.lrl">LRL</option>
+                    <option value="13" data-i18n="displayModes.matrix">2x2 Matrix</option>
+                    <option value="10" data-i18n="displayModes.half_tab">Half TaB</option>
+                    <option value="16" data-i18n="displayModes.full_tab">Full TaB</option>
+                    <!-- mode 3 (Raw SBS) is not exposed in the UI, matching #displayMode -->
+                    <option value="4" data-i18n="displayModes.left_only">Left eye only</option>
+                    <option value="5" data-i18n="displayModes.right_only">Right eye only</option>
+                    <option value="6" data-i18n="displayModes.wiggle">Wiggle</option>
+                </select>
+            </div>
+
+            <button id="viewerSwapLRBtn" class="viewer-btn" data-i18n-title="viewer.swapLR" title="Swap L/R" aria-pressed="false">L⟷R</button>
+            <button id="viewerPointer3dBtn" class="viewer-btn" data-i18n-title="viewer.pointer3d" title="3D Pointer (D)" aria-pressed="false">⊹</button>
+            <button id="viewerFitBtn" class="viewer-btn" data-i18n-title="viewer.buttonFit" title="Fit">⊡</button>
+
+            <button id="viewerNextBtn" class="viewer-btn" data-i18n-title="viewer.buttonNext" title="Next">➡</button>
+            <button id="viewerLoopBtn" class="viewer-btn" data-i18n-title="viewer.buttonLoop" title="Loop">↻</button>
+            <button id="viewerListBtn" class="viewer-btn" data-i18n-title="viewer.buttonList" title="List (L)">☰</button>
+
+            <div class="viewer-slideshow">
+                <select id="viewerSlideshowSpeed" class="modern-select" data-i18n-title="viewer.slideshowTitle" title="Slideshow" style="padding: 4px 8px; font-size: 12px;">
+                    <option value="0" data-i18n="viewer.slideshowOff">Slideshow</option>
+                    <option value="5" data-i18n="viewer.slideshow5s">5s</option>
+                    <option value="10" data-i18n="viewer.slideshow10s">10s</option>
+                    <option value="20" data-i18n="viewer.slideshow20s">20s</option>
+                    <option value="30" data-i18n="viewer.slideshow30s">30s</option>
+                    <option value="60" data-i18n="viewer.slideshow60s">1 min</option>
+                </select>
+            </div>
+
+            <button id="viewerFullscreenBtn" class="viewer-btn" data-i18n-title="viewer.buttonFullscreen" title="Fullscreen">⛶</button>
+            <button id="vr-button" class="viewer-btn vr-button hidden" data-i18n="vr.modeDisplay" data-i18n-title="vr.modeDisplay" title="View in VR mode">VR</button>
+            <button id="viewerHelpBtn" class="viewer-btn" data-i18n-title="viewer.buttonHelp" title="Help">?</button>
+            <button id="viewerExitBtn" class="viewer-btn" data-i18n-title="viewer.buttonExit" title="Exit">⊗</button>
+
+            <span class="viewer-zoom" id="viewerZoom" style="margin-left: 10px; color: #ccc; font-size: 12px;">100%</span>
+            <span class="viewer-shift" id="viewerShift">X:<span id="viewerShiftX">0</span> Y:<span id="viewerShiftY">0</span>px</span>
+            <span class="viewer-depth" id="viewerDepth" style="display: none; margin-left: 6px; color: #ccc; font-size: 12px;">D:<span id="viewerDepthValue">0</span>px</span>
+            <span class="viewer-filename" id="viewerFilename">-</span>
+        </div>
+    </div>
+
+    <!-- EXIF info modal -->
+    <div id="exifModal" class="modal-overlay hidden">
+        <div class="modal-dialog exif-modal" role="dialog" aria-modal="true" aria-labelledby="exifModalTitle">
+            <div class="modal-header">
+                <h2 id="exifModalTitle" data-i18n="exif.title">EXIF / Image info</h2>
+                <button id="closeExifModalBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Left/right switch tabs -->
+                <div class="exif-eye-tabs" id="exifEyeTabs">
+                    <span class="exif-eye-label" data-i18n="exif.sourceLabel">Source:</span>
+                    <button class="exif-eye-tab active" data-eye="left" id="exifEyeTabLeft">
+                        <span data-i18n="exif.left">Left</span>
+                    </button>
+                    <button class="exif-eye-tab" data-eye="right" id="exifEyeTabRight">
+                        <span data-i18n="exif.right">Right</span>
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="exif-tabs">
+                    <button class="exif-tab active" data-tab="exif" data-i18n="exif.tabExif">EXIF</button>
+                    <button class="exif-tab" data-tab="thumbnail" data-i18n="exif.tabThumbnail">Thumbnail</button>
+                    <button class="exif-tab" data-tab="details" data-i18n="exif.tabDetails">Details</button>
+                </div>
+
+                <!-- EXIF tab -->
+                <div class="exif-tab-content active" id="exif-tab-exif">
+                    <div class="exif-table-container">
+                        <table class="exif-table" id="exifTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="exif.category">Category</th>
+                                    <th data-i18n="exif.tag">Tag</th>
+                                    <th data-i18n="exif.value">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exifTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Thumbnail tab -->
+                <div class="exif-tab-content" id="exif-tab-thumbnail">
+                    <div class="exif-thumbnail-container">
+                        <img id="exifThumbnailImg" src="" alt="Thumbnail" class="hidden">
+                        <p id="noThumbnailMsg" data-i18n="exif.noThumbnail">No thumbnail included</p>
+                    </div>
+                </div>
+
+                <!-- Details tab -->
+                <div class="exif-tab-content" id="exif-tab-details">
+                    <div class="exif-table-container">
+                        <table class="exif-table" id="exifDetailsTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="exif.category">Category</th>
+                                    <th data-i18n="exif.tag">Tag</th>
+                                    <th data-i18n="exif.value">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exifDetailsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="exif-actions">
+                    <button id="copyExifBtn" class="btn btn-secondary" data-i18n="exif.copyClipboard">📋 Copy to clipboard</button>
+                    <button id="exportCsvBtn" class="btn btn-secondary" data-i18n="exif.exportCsv">💾 Export CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer mode help modal -->
+    <div id="viewerHelpModal" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="viewerHelpModalTitle" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="viewerHelpModalTitle" data-i18n="viewer.helpTitle">Viewer Help</h2>
+                <button id="closeViewerHelpModalBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body viewer-help-body" style="text-align: left;">
+                <h3 data-i18n="viewer.helpKeyboardTitle">Keyboard Navigation</h3>
+                <ul>
+                    <li><strong>N</strong> - <span data-i18n="viewer.helpKeyboardNext">Next image</span></li>
+                    <li><strong>P</strong> - <span data-i18n="viewer.helpKeyboardPrev">Previous image</span></li>
+                    <li><strong>L</strong> - <span data-i18n="viewer.helpKeyboardList">Toggle file list</span></li>
+                    <li><strong>S</strong> - <span data-i18n="viewer.helpKeyboardSwapLR">Swap left/right images</span></li>
+                </ul>
+                <h3 data-i18n="viewer.helpClickTitle">Mouse/Touch Navigation</h3>
+                <ul>
+                    <li><span data-i18n="viewer.helpClickLeft">Click left 1/6 of the image area</span> - <span data-i18n="viewer.helpClickPrev">Previous image</span></li>
+                    <li><span data-i18n="viewer.helpClickRight">Click right 1/6 of the image area</span> - <span data-i18n="viewer.helpClickNext">Next image</span></li>
+                    <li><span data-i18n="viewer.helpScroll">Mouse wheel / Touch pinch</span> - <span data-i18n="viewer.helpZoom">Zoom in/out</span></li>
+                </ul>
+                <h3 data-i18n="viewer.helpPointer3dTitle">3D Pointer</h3>
+                <p class="viewer-help-note" data-i18n="viewer.helpPointer3dAbout">Show a depth-adjustable marker to point at features in the stereo image.</p>
+                <ul>
+                    <li><strong>D</strong> / <strong>⊹</strong> - <span data-i18n="viewer.helpKeyboardPointer3d">Toggle 3D Pointer mode</span></li>
+                    <li><span data-i18n="viewer.helpPointer3dMove">Move the mouse</span> - <span data-i18n="viewer.helpPointer3dMoveDesc">Move the pointer over the image</span></li>
+                    <li><strong>Ctrl+Wheel</strong> - <span data-i18n="viewer.helpKeyboardPointer3dDepth">Adjust 3D Pointer depth</span></li>
+                </ul>
+                <h3 data-i18n="viewer.helpControlsTitle">Controls</h3>
+                <ul>
+                    <li><strong data-i18n="viewer.helpLoopMode">Loop mode</strong> - <span data-i18n="viewer.helpLoopDesc">Wrap around to first image when reaching the last image</span></li>
+                    <li><strong data-i18n="viewer.helpDisplayMode">Display mode</strong> - <span data-i18n="viewer.helpDisplayDesc">Change the 3D display format (anaglyph, interlace, etc.)</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer mode file list modal -->
+    <div id="viewerListModal" class="modal-overlay hidden">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="viewerListModalTitle" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="viewerListModalTitle" data-i18n="viewer.fileListTitle">File list</h2>
+                <button id="closeViewerListModalBtn" class="modal-close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="viewerFileListContainer" style="max-height: 400px; overflow-y: auto;">
+                    <!-- The file list is generated here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Worker registration -->
+    <script src="./js/sw-register.js"></script>
+
+    <!-- Portrait Guard Handler -->
+    <script src="./js/portrait-guard.js"></script>
+</body>
+</html>
