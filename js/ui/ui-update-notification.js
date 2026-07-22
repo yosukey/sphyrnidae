@@ -72,21 +72,36 @@ function safeLocalStorageGet(key) {
 // Dismissal keys. dismissedVersion is shared with the version-check flow
 // (versionCheck.js): dismissing EITHER banner records the version here so neither
 // re-notifies for it until a strictly newer version ships or "Update now" is
-// clicked. The session key is the fallback for a Service-Worker banner whose target
-// version is unknown (version.json was unreachable), so "Later" still stops the
-// per-reload nagging without stranding the dismissal across browser sessions.
+// clicked. The session key is the fallback for when the target version is unknown
+// (version.json was unreachable), so "Later" still stops the per-reload nagging
+// without stranding the dismissal across browser sessions.
 const DISMISSED_VERSION_KEY = 'dismissedVersion';
-const SW_UPDATE_DISMISSED_SESSION_KEY = 'swUpdateDismissedSession';
+const UPDATE_DISMISSED_SESSION_KEY = 'updateDismissedSession';
 
-// True when the user already dismissed this Service-Worker update via "Later".
-// Without this, the banner reappears on every reload: a downloaded worker stays
-// waiting across soft reloads (it activates only on SKIP_WAITING or once all tabs
-// close), and sw-register.js re-dispatches 'sw-update-available' on each page load.
-function isSwUpdateDismissed(latestVersion) {
+// True when the user already dismissed an update for this version via "Later".
+// The app has two independent detectors — the Service-Worker banner
+// (sw-update-available) and the version-check banner (version-outdated) — and both
+// consult this so dismissing EITHER suppresses the OTHER for the same update.
+// Without it the user sees the same update surfaced twice (once per detector),
+// especially when they resolve the version inconsistently (e.g. one fetch of
+// version.json succeeds with a number while the other returns null because the
+// network blipped, so the shared dismissedVersion key cannot match). The
+// version-aware check handles the normal case; the session key is the fallback for
+// when the target version is unknown, without stranding the dismissal across
+// browser sessions. It also stops the Service-Worker banner reappearing on every
+// reload, since a downloaded worker stays waiting across soft reloads (it activates
+// only on SKIP_WAITING or once all tabs close) and sw-register.js re-dispatches
+// 'sw-update-available' on each page load.
+function isUpdateDismissed(latestVersion) {
+    // Version-aware check when the number is known: this is what lets a strictly
+    // newer release re-notify even after an earlier "Later" this session (the
+    // session key alone would wrongly suppress it).
     if (latestVersion) {
         return safeLocalStorageGet(DISMISSED_VERSION_KEY) === latestVersion;
     }
-    return safeSessionStorageGet(SW_UPDATE_DISMISSED_SESSION_KEY) === '1';
+    // Unknown target version (version.json unreachable): fall back to the
+    // session-scoped flag so a dismissal made by EITHER detector still holds.
+    return safeSessionStorageGet(UPDATE_DISMISSED_SESSION_KEY) === '1';
 }
 
 // A build fingerprint that changes even when the SemVer string does not — e.g. a
@@ -156,9 +171,11 @@ export function initUpdateNotification() {
         }
 
         // Respect an explicit "Later" so the banner does not reappear on every
-        // reload while the downloaded worker stays waiting (see isSwUpdateDismissed).
-        // "Update now" clears these keys, so a future genuine update is not suppressed.
-        if (isSwUpdateDismissed(latestVersion)) {
+        // reload while the downloaded worker stays waiting (see isUpdateDismissed).
+        // Dismissing the version-check banner counts too, so the same update is not
+        // surfaced a second time here. "Update now" clears these keys, so a future
+        // genuine update is not suppressed.
+        if (isUpdateDismissed(latestVersion)) {
             logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'SW update was dismissed earlier; not re-showing banner.');
             return;
         }
@@ -188,6 +205,11 @@ export function initUpdateNotification() {
         logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Current version:', currentVersion);
         logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Latest version:', latestVersion);
 
+        // No dismissal re-check is needed here: checkForUpdates only dispatches
+        // 'version-outdated' after it has already confirmed dismissedVersion !== the
+        // online version (its own gate), and that is exactly what suppresses this
+        // banner when the Service-Worker banner was dismissed with a known version. If
+        // a banner is already on screen, showUpdateNotification dedupes it.
         showUpdateNotification({
             type: 'version-check',
             message: tr('update.newVersionAvailableWithNumber', `A new version ${latestVersion} is available`, { version: latestVersion }),
@@ -397,22 +419,45 @@ function showHardReloadInstruction(currentVersion, expectedVersion) {
  * @param {Object} updateInfo - Update information
  */
 function showUpdateNotification(updateInfo) {
-    // If a banner is already shown, only allow an *upgrade* from a version-check
-    // banner to a service-worker banner. A service-worker banner coordinates with a
-    // downloaded, waiting worker (safe SKIP_WAITING activation that preserves the new
-    // precache), whereas a version-check banner has no SW coordination. Letting a
-    // version-check banner supersede a service-worker one would route the user into
-    // the aggressive cache-clear path and wipe the waiting worker's fresh shell.
+    // A single update is detected by two independent mechanisms — the version-check
+    // (version-outdated, synchronous) and the Service Worker (sw-update-available,
+    // async because it awaits fetchOnlineVersion). They race, so both can reach here
+    // for the SAME update. If a banner is already shown we must NOT pop a second one:
+    // the user perceives that as being notified twice in a row for one update.
     if (updateBanner && document.body.contains(updateBanner)) {
         const existingIsServiceWorker = currentUpdateInfo?.type === 'service-worker';
         const incomingIsServiceWorker = updateInfo?.type === 'service-worker';
 
+        // Upgrade a visible version-check banner to the Service-Worker path IN PLACE.
+        // Both "Update now" paths converge on the same outcome — activate the new
+        // worker via SKIP_WAITING, then reload on controllerchange — so the update
+        // ACTION is effectively identical. The service-worker path is simply the more
+        // direct route here: it already holds the registration reference and a known
+        // waiting worker, so it activates that worker straight away, whereas the
+        // version-check path has to re-derive the registration (getRegistration) and
+        // may trigger registration.update() plus a cache-busting reload fallback. Since
+        // both detectors firing means a waiting worker exists, preferring the SW path
+        // is strictly the safer/leaner choice. Only the *behavior* needs upgrading —
+        // the visible message and version are identical — so we just swap
+        // currentUpdateInfo (which handleUpdateNow/handleUpdateLater read) and keep the
+        // existing banner on screen. Tearing it down to re-create an otherwise-identical
+        // banner is what made the notification appear twice.
         if (!existingIsServiceWorker && incomingIsServiceWorker) {
-            hideUpdateNotificationImmediate();
+            logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Upgrading visible banner to service-worker path in place');
+            // Adopt the service-worker info (registration/type) but keep the version
+            // number the visible banner already resolved if the SW event could not
+            // resolve one (version.json momentarily unreachable). Otherwise a later
+            // "Later" click could not persist the versioned dismissal (handleUpdateLater
+            // records dismissedVersion only when latestVersion is known), so the banner
+            // would reappear next session for a version we in fact already knew.
+            currentUpdateInfo = {
+                ...updateInfo,
+                latestVersion: updateInfo.latestVersion || currentUpdateInfo?.latestVersion || null
+            };
         } else {
             logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Banner already visible');
-            return;
         }
+        return;
     }
 
     currentUpdateInfo = updateInfo;
@@ -517,16 +562,6 @@ function showUpdateNotification(updateInfo) {
     logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Banner displayed');
 }
 
-function hideUpdateNotificationImmediate() {
-    if (!updateBanner) return;
-
-    if (updateBanner.parentNode) {
-        updateBanner.parentNode.removeChild(updateBanner);
-    }
-    updateBanner = null;
-    currentUpdateInfo = null;
-}
-
 /**
  * Handler for the "Update now" button
  */
@@ -551,56 +586,36 @@ function handleUpdateNow() {
 
     // Clear the dismissal keys so the version we're updating to isn't suppressed.
     safeLocalStorageRemove(DISMISSED_VERSION_KEY);
-    safeSessionStorageRemove(SW_UPDATE_DISMISSED_SESSION_KEY);
+    safeSessionStorageRemove(UPDATE_DISMISSED_SESSION_KEY);
 
-    if (currentUpdateInfo && currentUpdateInfo.type === 'service-worker') {
-        // Service Worker update path:
-        // Tell the waiting worker to activate. Its activate handler already cleans up
-        // stale caches and (re)populates the app-shell cache, then clients.claim()
-        // triggers 'controllerchange' in sw-register.js, which reloads the page.
-        //
-        // IMPORTANT: do NOT delete all caches here. The waiting worker has just
-        // precached the new app shell during install; wiping every cache would leave
-        // the app with nothing to fall back on if the network is unavailable right
-        // after reload (breaking offline updates).
-        const registration = currentUpdateInfo.registration;
-
-        if (registration && registration.waiting) {
-            logger.debug('UPDATE_NOTIFICATION_LOG', 'UpdateNotification', 'Sending SKIP_WAITING; reload will follow controllerchange');
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-
-            // Fallback: if controllerchange does not fire within a few seconds
-            // (e.g. the worker was already activating), reload manually.
-            setTimeout(() => {
-                logger.warn('UpdateNotification', 'controllerchange not observed; forcing reload');
-                window.location.reload();
-            }, 3000);
-            return;
-        }
-
-        // No waiting worker available (it activated or was discarded between banner
-        // display and click). Drive a fresh SW update (fetch + activate) rather than a
-        // plain reload, which cannot apply an update under the cache-first shell —
-        // same root cause as the version-check path, so reuse the same helper.
-        logger.warn('UpdateNotification', 'SW update requested but no waiting worker; driving a fresh update');
-        driveServiceWorkerUpdate(registration);
-        return;
-    }
-
-    // Version-check path. The periodic version.json check found a newer release, but
-    // the Service Worker may not have picked it up yet — the version.json check can
-    // out-race the SW's own update() at load, so a waiting/installing worker often
-    // does NOT exist at this point. The app shell is served cache-first (and the HTML
-    // route ignores the query string), so a plain or cache-busted reload would just
-    // re-serve the SAME version and then trip the "update may have failed" banner.
-    // Drive a real SW update (fetch + activate) instead, so the new shell is actually
-    // installed and swapped in.
+    // Both detectors converge on the SAME update action, so there is a single code
+    // path here regardless of which banner was shown: hand off to a Service Worker
+    // that activates the new version (SKIP_WAITING), and sw-register.js reloads on
+    // controllerchange. driveServiceWorkerUpdate already covers every worker state —
+    // waiting (activate immediately), installing (activate once installed), or none
+    // (registration.update() to fetch one) — and only falls back to a cache-busting
+    // reload if no worker can be produced. That is why the version-check banner (whose
+    // periodic version.json check can out-race the SW's own update(), so a waiting
+    // worker often does not exist yet) and the service-worker banner share it.
+    //
+    // IMPORTANT: do not delete all caches here. A waiting worker has just precached
+    // the new app shell; wiping every cache would strand the app offline right after
+    // reload. driveServiceWorkerUpdate's fallback (clearNonShellCachesAndReload)
+    // preserves the versioned shell caches for exactly that reason.
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then((registration) => {
-            driveServiceWorkerUpdate(registration);
-        }).catch(() => {
-            clearNonShellCachesAndReload();
-        });
+        // Prefer the registration the Service-Worker detector already handed us: it
+        // references a known waiting worker, so activation is immediate. The
+        // version-check detector carries no registration, so look it up in that case.
+        const knownRegistration = currentUpdateInfo?.registration;
+        if (knownRegistration) {
+            driveServiceWorkerUpdate(knownRegistration);
+        } else {
+            navigator.serviceWorker.getRegistration().then((registration) => {
+                driveServiceWorkerUpdate(registration);
+            }).catch(() => {
+                clearNonShellCachesAndReload();
+            });
+        }
         return;
     }
 
@@ -609,9 +624,11 @@ function handleUpdateNow() {
 
 /**
  * Drive a Service Worker registration to activate a new version, then let
- * sw-register.js's controllerchange handler reload the page. Used by the
- * version-check "Update now" path, where a waiting worker frequently does not exist
- * yet (the version.json check out-races the SW's own update() at load).
+ * sw-register.js's controllerchange handler reload the page. This is the single
+ * "Update now" path for both banner types: the service-worker banner passes the
+ * registration it already holds, while the version-check banner passes the one it
+ * looked up (where a waiting worker frequently does not exist yet, because the
+ * version.json check out-races the SW's own update() at load).
  *
  * Because the app shell is served cache-first, a plain reload cannot apply an
  * update — a new SW must be fetched and activated. This:
@@ -790,15 +807,16 @@ function handleUpdateLater() {
     if (currentUpdateInfo && currentUpdateInfo.latestVersion) {
         dismissVersionNotification(currentUpdateInfo.latestVersion);
     }
-    // For a Service-Worker banner, also set the session-scoped flag regardless of
-    // whether the version was known when dismissed. A later *offline* reload re-fires
-    // 'sw-update-available' (the worker stays waiting across soft reloads) but resolves
-    // latestVersion to null because version.json is unreachable, and isSwUpdateDismissed(null)
-    // can then only consult the session key — so without this the banner the user just
-    // dismissed would reappear on that offline reload despite the persisted version key.
-    if (currentUpdateInfo && currentUpdateInfo.type === 'service-worker') {
-        safeSessionStorageSet(SW_UPDATE_DISMISSED_SESSION_KEY, '1');
-    }
+    // Set the session-scoped flag for BOTH banner types, regardless of whether the
+    // version was known when dismissed. This is what stops the SAME update being
+    // surfaced twice by the two independent detectors (Service-Worker vs version
+    // check): whichever banner the user dismisses, the other consults this flag (via
+    // isUpdateDismissed) and stays silent for the rest of the session. It is also the
+    // fallback when a later reload re-fires the notification but resolves latestVersion
+    // to null (e.g. version.json unreachable offline), where the persisted version key
+    // cannot match. "Update now" clears it so a genuinely newer version is not
+    // suppressed.
+    safeSessionStorageSet(UPDATE_DISMISSED_SESSION_KEY, '1');
 
     // Hide the banner
     hideUpdateNotification();
