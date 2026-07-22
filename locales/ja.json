@@ -435,7 +435,6 @@
     "adoptedPoints": "採用点数: {{valid}} / {{total}}",
     "verticalShift": "垂直ズレ: {{value}}px",
     "horizontalShift": "水平ズレ: {{value}}px",
-    "pipeline": "パイプライン: Disparity Comfort",
     "analysisRegion": "解析領域: クロップ範囲（{{width}}×{{height}} px/眼）",
     "dxRange": "DXレンジ: [{{min}}, {{max}}] px",
     "zeroPlane": "ゼロ視差面 p{{percentile}}: {{value}} px",
