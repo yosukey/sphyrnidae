@@ -1,0 +1,705 @@
+/**
+ * controls.css
+ * All form elements, inputs, buttons, sliders, checkboxes, and control-related styles
+ */
+
+/* ===== Parallax adjustment controls (main menu, single-column layout) ===== */
+.parallax-controls {
+  display: block;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+}
+
+.parallax-controls .control-group {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Container to place the slider and buttons side by side */
+.slider-with-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.slider-with-button .modern-slider {
+  flex: 1;
+}
+
+/* Styles for the ZERO and FIT buttons */
+.zero-btn,
+.fit-btn {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  min-width: 45px;
+}
+
+.zero-btn:hover,
+.fit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.zero-btn:active,
+.fit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.3);
+}
+
+.parallax-controls .control-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.parallax-controls .modern-btn {
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+}
+
+.parallax-controls .checkbox-group {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+}
+
+.parallax-controls input[type="range"] {
+  width: 100%;
+}
+
+.parallax-controls .modern-checkbox {
+  width: 100%;
+}
+
+/* ===== Alignment section ===== */
+.alignment-section {
+  padding: var(--spacing-md);
+  margin: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+  background: var(--bg-card);
+  border: 1px solid rgba(110, 110, 110, 0.75);
+  border-radius: var(--border-radius-md);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.alignment-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.alignment-section .section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 0 0 auto;
+}
+
+.alignment-exec-btn {
+  width: auto !important;
+  padding: 1px var(--spacing-lg) !important;
+  font-size: var(--font-size-xs);
+  height: 20px !important;
+  min-height: 20px !important;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  line-height: 1.0;
+}
+
+.alignment-section .control-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.alignment-section .control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.alignment-section .modern-btn {
+  margin-bottom: 0;
+}
+
+/* Two-column grid (alignment section) */
+.control-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  align-items: end;
+}
+
+.control-group.compact {
+  margin-bottom: 0;
+}
+
+/* Span both columns of .control-grid-2col (e.g. a lone control on its row) */
+.control-group.full-span {
+  grid-column: 1 / -1;
+}
+
+.control-group.align-bottom {
+  display: flex;
+  align-items: flex-end;
+}
+
+.modern-btn.compact-btn {
+  margin-bottom: 0;
+  height: 32px;
+  /* Override the inherited vertical padding (var(--spacing-lg)) so the label
+     is not pushed out of the fixed 32px height, then center it with flex. */
+  padding-top: 0;
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+}
+
+/* ===== Quick Controls ===== */
+.quick-controls {
+  padding: var(--spacing-md);
+}
+
+/* ===== Control Groups ===== */
+.control-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.grouped-control-card {
+  border: 1px solid rgba(110, 110, 110, 0.75);
+  border-radius: var(--border-radius-md);
+  background: var(--bg-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.grouped-control-item:last-child {
+  margin-bottom: 0;
+}
+
+.clipboard-export-title {
+  font-size: var(--font-size-sm);
+}
+
+.control-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.control-label.small {
+  font-size: var(--font-size-xs);
+}
+
+.value-display {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.unit {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  margin-left: 2px;
+}
+
+/* Control hints */
+.control-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ===== Modern Inputs ===== */
+.modern-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  background: rgba(36, 36, 36, 0.9);
+}
+
+.modern-input.small {
+  padding: 5px 7px;
+  font-size: var(--font-size-xs);
+}
+
+/* Increase number input height to make step arrows easier to see */
+input[type="number"].modern-input.small {
+  padding: var(--spacing-lg) 7px;
+  height: 32px;
+  line-height: 16px;
+}
+
+/* Styles for disabled input fields and radio buttons */
+input[type="number"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Styles for labels containing disabled radio buttons */
+label:has(input[type="radio"]:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+label:has(input[type="radio"]:disabled) span {
+  cursor: not-allowed;
+}
+
+.modern-select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.modern-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(100, 100, 100, 0.7);
+  border-radius: 2px;
+  outline: none;
+}
+
+.modern-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modern-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 5px rgba(33, 150, 243, 0.2);
+}
+
+.modern-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modern-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 5px rgba(33, 150, 243, 0.2);
+}
+
+/* ===== Modern Buttons ===== */
+.modern-btn {
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-md);
+  border: none;
+  border-radius: 5px;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--spacing-sm);
+}
+
+.modern-btn.primary {
+  background: var(--accent-blue);
+  color: white;
+  opacity: 0.75;
+}
+
+.modern-btn.primary:hover {
+  background: var(--accent-blue-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+  opacity: 1.0;
+}
+
+.modern-btn.primary:disabled {
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modern-btn.secondary {
+  background: rgba(72, 72, 72, 0.78);
+  color: var(--text-primary);
+  border: 1px solid rgba(130, 130, 130, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
+.modern-btn.secondary:hover {
+  background: rgba(92, 92, 92, 0.88);
+  border-color: rgba(185, 185, 185, 0.9);
+  opacity: 1.0;
+}
+
+.modern-btn.secondary.active {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+  opacity: 1.0;
+}
+
+/* ===== Control Grid ===== */
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ===== Checkbox ===== */
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) 12px;
+}
+
+.checkbox-row .checkbox-group {
+  margin-bottom: 0;
+}
+
+.checkbox-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.modern-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.modern-checkbox:hover {
+  background: var(--bg-hover);
+}
+
+.modern-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.modern-checkbox .checkmark {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
+  margin-right: var(--spacing-lg);
+  position: relative;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .checkmark {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.modern-checkbox input[type="checkbox"]:checked + .checkmark::after {
+  content: '✔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+}
+
+.modern-checkbox .label-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+/* ===== VR Button Styles ===== */
+.vr-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: var(--spacing-sm) 12px;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all var(--transition-medium) var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+  margin-left: var(--spacing-lg);
+}
+
+.vr-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
+.vr-button:active {
+  transform: scale(0.98);
+}
+
+/* Button styles in VR mode */
+.vr-button.vr-active {
+  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+}
+
+/* Adjustment section */
+.adjustment-section {
+  margin-bottom: var(--spacing-xl);
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(110, 110, 110, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ===== Image quality adjustment ===== */
+/* Global L/R link toggle (shown directly under the image-adjust menu header) */
+.link-lr-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+  cursor: pointer;
+  user-select: none;
+}
+
+.link-lr-toggle input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Parameter container (one per brightness / contrast / etc.) */
+.quality-param {
+  margin-bottom: var(--spacing-md);
+}
+
+.quality-param:last-child {
+  margin-bottom: 0;
+}
+
+.quality-row {
+  margin-bottom: var(--spacing-sm);
+}
+
+.quality-row:last-child {
+  margin-bottom: 0;
+}
+
+.quality-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.quality-label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.quality-row-body {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.quality-row-body .modern-slider {
+  flex: 1;
+}
+
+.quality-number-input {
+  width: 70px;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+/* Per-parameter reset button */
+.param-reset-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  flex: 0 0 auto;
+}
+
+.param-reset-btn:hover:not(:disabled) {
+  color: var(--accent-blue);
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.param-reset-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Linked/unlinked display state on #image-adjust-content */
+#image-adjust-content.linked .quality-row-r {
+  display: none;
+}
+
+#image-adjust-content.linked .label-prefix {
+  display: none;
+}
+
+#image-adjust-content.linked .auto-levels-unlinked {
+  display: none;
+}
+
+#image-adjust-content.unlinked .auto-levels-linked {
+  display: none;
+}
+
+.adjustment-section .section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Color selection buttons */
+.color-selector {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-lg);
+}
+
+.color-option {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.color-option.active {
+  border-color: var(--accent-blue);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+}
+
+/* ===== EXIF Button in Status Panel ===== */
+.exif-btn {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.exif-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+}
+
+.exif-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Resize mode toggle ===== */
+.resize-mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.resize-mode-btn {
+  flex: 1;
+  padding: 5px 12px;
+  background: rgba(26, 26, 26, 0.8);
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.resize-mode-btn:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+
+.resize-mode-btn:hover:not(.active) {
+  background: var(--bg-hover);
+}
+
+.resize-mode-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+}

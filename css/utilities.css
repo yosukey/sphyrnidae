@@ -1,0 +1,552 @@
+/**
+ * utilities.css
+ * Utility styles including toast notifications, offline indicator, update banner, and responsive styles
+ */
+
+/* ===== Utility Classes ===== */
+/* Use .hidden instead of inline style="display:none" to reduce 'unsafe-inline' CSP dependency */
+.hidden {
+  display: none;
+}
+
+/* Skip link for keyboard-only navigation (accessibility) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--accent-blue);
+  color: #fff;
+  padding: 8px 16px;
+  z-index: var(--z-alert);
+  font-size: var(--font-size-md);
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* ===== Toast Notifications ===== */
+.toast-container {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  right: var(--spacing-xl);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--spacing-md);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: var(--spacing-xl) var(--spacing-xl);
+  background: rgba(30, 30, 30, 0.95);
+  color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+              0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: var(--font-size-lg);
+  line-height: 1.4;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(calc(100% + 20px));
+  transition: opacity var(--transition-medium) ease,
+              transform var(--transition-medium) ease;
+  border-left: 4px solid #4a90e2;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.toast-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-hide {
+  opacity: 0;
+  transform: translateX(calc(100% + 20px));
+}
+
+/* Toast types */
+.toast-info {
+  border-left-color: #4a90e2;
+}
+
+.toast-success {
+  border-left-color: #4caf50;
+}
+
+.toast-warning {
+  border-left-color: #ff9800;
+}
+
+.toast-error {
+  border-left-color: #f44336;
+}
+
+/* Toast icon */
+.toast-icon {
+  font-size: 20px;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toast-info .toast-icon {
+  color: #4a90e2;
+}
+
+.toast-success .toast-icon {
+  color: #4caf50;
+}
+
+.toast-warning .toast-icon {
+  color: #ff9800;
+}
+
+.toast-error .toast-icon {
+  color: #f44336;
+}
+
+/* Toast message */
+.toast-message {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Toast close button */
+.toast-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color var(--transition-fast) ease;
+}
+
+.toast-close:hover {
+  color: white;
+}
+
+.toast-close:active {
+  transform: scale(0.9);
+}
+
+/* Viewer toast notification */
+.viewer-toast {
+  position: fixed;
+  top: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  z-index: var(--z-modal);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-medium) ease;
+}
+
+.viewer-toast.visible {
+  opacity: 1;
+}
+
+.viewer-toast.error {
+  background: rgba(200, 40, 40, 0.9);
+}
+
+/* ===== Offline Indicator Styles ===== */
+.offline-indicator {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  max-width: 500px;
+  width: calc(100% - 40px);
+  background: rgba(244, 67, 54, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 82, 82, 0.3);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 20px rgba(244, 67, 54, 0.4);
+  z-index: var(--z-overlay);
+  opacity: 0;
+  transition: all var(--transition-medium) var(--transition-smooth);
+}
+
+.offline-indicator.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.offline-indicator-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-lg) 18px;
+}
+
+.offline-indicator-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.offline-indicator-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.offline-indicator-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: var(--spacing-xs);
+}
+
+.offline-indicator-message {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+/* ===== Update Notification Banner Styles ===== */
+.update-notification-banner {
+  position: fixed;
+  top: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  max-width: 600px;
+  width: calc(100% - 40px);
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-heavy);
+  z-index: var(--z-modal);
+  opacity: 0;
+  transition: all var(--transition-medium) var(--transition-smooth);
+}
+
+.update-notification-banner.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.update-notification-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-xl) var(--spacing-xl);
+}
+
+.update-notification-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: rotate-icon 2s linear infinite;
+}
+
+@keyframes rotate-icon {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.update-notification-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-notification-message {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.update-notification-version-info {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.update-notification-version-info .version-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.update-notification-version-info .version-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--bg-secondary);
+  padding: 2px var(--spacing-sm);
+  border-radius: 3px;
+}
+
+.update-notification-version-info .version-value-highlight {
+  background: rgba(33, 150, 243, 0.1);
+  color: var(--accent-blue);
+}
+
+.update-notification-build-info {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+.update-notification-instruction {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+/* Warning style for failed update banner */
+.update-failed-banner {
+  border-color: rgba(255, 152, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(255, 193, 7, 0.05) 100%);
+}
+
+.update-failed-banner .update-notification-icon {
+  animation: none; /* No rotation for warning icon */
+}
+
+.update-notification-actions {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.update-notification-btn {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  white-space: nowrap;
+}
+
+.update-notification-btn-primary {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.update-notification-btn-primary:hover {
+  background: var(--accent-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.update-notification-btn-primary:active {
+  transform: translateY(0);
+}
+
+.update-notification-btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.update-notification-btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-tertiary);
+}
+
+.update-notification-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* ===== Responsive styles ===== */
+@media (max-width: 480px) {
+  #ui-container {
+    width: 100%;
+  }
+
+  #status-panel {
+    top: auto;
+    bottom: var(--spacing-md);
+    right: var(--spacing-md);
+    min-width: 150px;
+  }
+
+  .control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .action-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Portrait mode: Narrow menu for better UX */
+@media (orientation: portrait) and (pointer: coarse) and (max-width: 600px) {
+  #ui-container {
+    width: 50vw;
+    min-width: 50vw;
+    max-width: 200px;
+  }
+
+  /* Adjust margin for closed state */
+  #ui-container.ui-hidden {
+    margin-left: -50vw;
+  }
+
+  body.menu-open #ui-container {
+    margin-left: 0;
+  }
+
+  /* Adjust panel-close-tab position to match menu width */
+  .panel-tab {
+    left: 50vw;
+  }
+
+  /* Hide the tab when the menu is closed */
+  #ui-container.ui-hidden ~ .panel-tab {
+    left: 0;
+  }
+
+  /* Ensure drawer handle stays visible when menu is closed */
+  body:not(.menu-open) .drawer-handle {
+    left: 0;
+  }
+
+  /* Override 3-column grid for narrow portrait container */
+  .menu-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile support for toast notifications */
+@media (max-width: 600px) {
+  .toast-container {
+    bottom: var(--spacing-md);
+    right: var(--spacing-md);
+    left: var(--spacing-md);
+    max-width: none;
+  }
+
+  .toast {
+    font-size: 13px;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    gap: var(--spacing-md);
+  }
+
+  .toast-icon {
+    font-size: 18px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .toast-close {
+    font-size: 20px;
+  }
+}
+
+/* Mobile support for offline indicator */
+@media (max-width: 600px) {
+  .offline-indicator {
+    bottom: var(--spacing-md);
+    width: calc(100% - 20px);
+  }
+
+  .offline-indicator-content {
+    padding: 12px var(--spacing-xl);
+  }
+
+  .offline-indicator-icon {
+    font-size: 24px;
+  }
+
+  .offline-indicator-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .offline-indicator-message {
+    font-size: var(--font-size-md);
+  }
+}
+
+/* Mobile support for update notification */
+@media (max-width: 600px) {
+  .update-notification-banner {
+    top: var(--spacing-md);
+    width: calc(100% - 20px);
+  }
+
+  .update-notification-content {
+    flex-direction: column;
+    gap: 12px;
+    padding: var(--spacing-xl);
+    text-align: center;
+  }
+
+  .update-notification-text {
+    width: 100%;
+  }
+
+  .update-notification-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .update-notification-btn {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+  }
+}
+
+/* Dark mode support for toast */
+@media (prefers-color-scheme: light) {
+  .toast {
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .toast-close {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .toast-close:hover {
+    color: rgba(0, 0, 0, 0.8);
+  }
+
+  .toast-icon {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}

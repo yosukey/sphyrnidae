@@ -1,0 +1,351 @@
+/**
+ * viewer.css
+ * Viewer mode specific styles including control bar, navigation, and portrait mode guard
+ */
+
+/* ===== Viewer Mode Styles ===== */
+
+.viewer-mode-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(26, 26, 26, 0.95);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-md);
+  z-index: var(--z-sticky);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform var(--transition-medium) ease,
+              opacity var(--transition-medium) ease;
+}
+
+/* Auto-hide the control bar in viewer mode */
+.viewer-mode-bar.viewer-bar-hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.viewer-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 1200px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.viewer-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) 12px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  transition: all var(--transition-fast) ease;
+  flex-shrink: 0;
+}
+
+.viewer-btn:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.viewer-btn:active {
+  transform: scale(0.98);
+}
+
+.viewer-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.viewer-btn.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+}
+
+.viewer-display-mode {
+  flex-shrink: 0;
+}
+
+.viewer-slideshow {
+  flex-shrink: 0;
+}
+
+.viewer-shift {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-left: var(--spacing-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.viewer-filename {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+  padding-left: var(--spacing-md);
+}
+
+.viewer-mode-bar .modern-select {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+}
+
+.viewer-mode-bar .modern-select:hover {
+  background: rgba(51, 51, 51, 0.80);
+  border-color: var(--accent-blue);
+}
+
+.viewer-mode-bar .modern-select:focus {
+  outline: none;
+  background: rgba(51, 51, 51, 0.95);
+  border-color: var(--accent-blue);
+}
+
+/* Viewer mode dialog */
+.file-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: var(--spacing-md) 15px;
+  background: var(--bg-hover);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast) ease;
+  color: var(--text-secondary);
+}
+
+.file-input-label:hover {
+  border-color: var(--accent-blue);
+  background: rgba(33, 150, 243, 0.1);
+  color: var(--accent-blue);
+}
+
+/* Make the canvas compatible with viewer mode */
+#canvas-container.viewer-mode {
+  margin-bottom: 60px;
+}
+
+/* Hide tabs and drawer handle in viewer mode */
+body:has(#canvas-container.viewer-mode) .panel-tab,
+body:has(#canvas-container.viewer-mode) .drawer-handle {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .viewer-controls {
+    justify-content: space-between;
+    font-size: var(--font-size-md);
+  }
+
+  .viewer-btn {
+    padding: var(--spacing-xs) var(--spacing-lg);
+    font-size: var(--font-size-md);
+  }
+
+  .viewer-filename {
+    position: absolute;
+    bottom: -20px;
+    left: var(--spacing-md);
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* ===== Portrait Mode Guard ===== */
+.portrait-guard {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  z-index: var(--z-alert);
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+}
+
+.portrait-guard-content {
+  text-align: center;
+  max-width: 400px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.portrait-guard-icon {
+  font-size: 80px;
+  margin-bottom: var(--spacing-xl);
+  animation: pulse 2s infinite;
+}
+
+.portrait-guard-rotate-icon {
+  font-size: 60px;
+  margin-bottom: 30px;
+  animation: rotate 2s linear infinite;
+  display: inline-block;
+}
+
+.portrait-guard-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 15px;
+}
+
+.portrait-guard-message {
+  font-size: var(--font-size-xl);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.portrait-guard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.portrait-guard-btn {
+  padding: var(--spacing-xl) 32px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  min-width: 200px;
+}
+
+.portrait-guard-btn-primary {
+  background: var(--accent-blue);
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+}
+
+.portrait-guard-btn-primary:hover {
+  opacity: 1;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(74, 158, 255, 0.6);
+}
+
+.portrait-guard-btn-primary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+}
+
+.portrait-guard-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}
+
+.portrait-guard-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.portrait-guard-checkbox input[type="checkbox"]:checked {
+  accent-color: var(--accent-blue);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Show guard in portrait orientation on phones */
+@media (orientation: portrait) and (pointer: coarse) and (max-width: 600px) {
+  .portrait-guard {
+    display: flex;
+  }
+}
+
+/* ===== Viewer File List ===== */
+.viewer-file-list-item {
+  padding: var(--spacing-lg) 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast) ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.viewer-file-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.viewer-file-list-item--current {
+  background-color: var(--accent-blue) !important;
+  color: white;
+  font-weight: bold;
+}
+
+.viewer-file-list-item--error {
+  background-color: rgba(200, 40, 40, 0.15);
+  color: var(--text-tertiary);
+}
+
+.viewer-file-list-item--error:hover {
+  background-color: rgba(200, 40, 40, 0.25);
+}
