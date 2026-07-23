@@ -120,7 +120,11 @@ export function update3dtvCheckboxVisibility(mode) {
     // Show only for SBS (mode 7, 8, 9) and TaB (mode 10, 16)
     const shouldShow = is3DTVModeApplicable(mode);
 
-    sbs3dtvGroup.style.display = shouldShow ? '' : 'none';
+    // Toggle the .hidden utility class rather than the inline display: the
+    // element carries `hidden` (display:none in utilities.css, loaded last), and
+    // setting style.display='' only clears the inline value, leaving .hidden to
+    // keep it hidden. Match the resize-group pattern (ui.js) that flips .hidden.
+    sbs3dtvGroup.classList.toggle('hidden', !shouldShow);
 
     // If hidden, uncheck and reset state
     if (!shouldShow && state.params.sbs3dtv) {
@@ -238,6 +242,10 @@ export function updateBorderDecorationVisibility(mode) {
     if (borderGroup) {
         // Show only for modes 8, 9, 12, 13
         const shouldShow = (mode === 8 || mode === 9 || mode === 12 || mode === 13);
-        borderGroup.style.display = shouldShow ? '' : 'none';
+        // Toggle the .hidden utility class rather than the inline display: the
+        // element carries `hidden` (display:none in utilities.css, loaded last), and
+        // setting style.display='' only clears the inline value, leaving .hidden to
+        // keep it hidden. Match the resize-group pattern (ui.js) that flips .hidden.
+        borderGroup.classList.toggle('hidden', !shouldShow);
     }
 }
