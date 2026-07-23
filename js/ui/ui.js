@@ -683,6 +683,10 @@ export function setupEventListeners() {
   if (enableBorderDecorationCheckbox) {
     enableBorderDecorationCheckbox.addEventListener('change', (e) => {
       state.exportOptions.enableBorderDecoration = e.target.checked;
+      // Border decoration is incompatible with MPO (the MPO export path stores
+      // per-eye JPEGs and skips the decorated canvas), so re-evaluate the format
+      // list to remove/restore the MPO option and switch away from it if selected.
+      updateExportFormatOptions();
     }, { signal });
   }
 

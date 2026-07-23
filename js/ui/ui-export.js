@@ -1090,7 +1090,16 @@ export function updateExportFormatOptions() {
         const mpoOption = saveFormatSelect.querySelector('option[value="image/mpo"]');
         if (mpoOption) {
             const mpoInappropriateModes = [1, 2, 4, 5];
-            if (mpoInappropriateModes.includes(currentMode)) {
+            // Border decoration (naked-eye margin + fusion dots) is a 2D canvas
+            // post-process applied to the composited output. The MPO path stores
+            // two separate per-eye JPEGs and never touches that canvas, so the
+            // decoration would be silently dropped. Treat MPO as inapplicable while
+            // border decoration is enabled AND applicable to the current mode
+            // (8/9/12/13); in other modes the checkbox is inert (hidden), so its
+            // stale state must not suppress MPO.
+            const borderDecorationActive = state.exportOptions.enableBorderDecoration
+                && (currentMode === 8 || currentMode === 9 || currentMode === 12 || currentMode === 13);
+            if (mpoInappropriateModes.includes(currentMode) || borderDecorationActive) {
                 // disabled+hidden as well as display:none so Safari/iOS pickers
                 // cannot select MPO in modes where it does not apply.
                 mpoOption.style.display = 'none';
@@ -1161,8 +1170,16 @@ function limitFileNameLength(fullName) {
 }
 
 /**
- * Get panel coordinates for border decoration based on mode
- * @param {number} mode - Display mode (8, 9, 12, 13)
+ * Get panel coordinates for border decoration based on mode.
+ *
+ * Only single-row layouts reach this function: Parallel/Cross (8/9) and LRL (12).
+ * The 2x2 Matrix (mode 13) is decorated per-view — drawBorderDecoration() is
+ * called separately for its parallel (8) and cross (9) rows, which are then
+ * stacked — so mode 13 is never passed here. (A single-canvas mode-13 layout is
+ * intentionally not supported: its top-row dots would land inside the image
+ * instead of in a top margin.)
+ *
+ * @param {number} mode - Display mode (8, 9, or 12)
  * @param {number} width - Canvas width
  * @param {number} height - Canvas height
  * @returns {Array<{x: number, y: number, width: number, height: number}>} Panel coordinates
@@ -1180,14 +1197,6 @@ function getPanelsForMode(mode, width, height, yOffset = 0) {
             { x: 0, y: yOffset, width: width / 3, height: height },
             { x: width / 3, y: yOffset, width: width / 3, height: height },
             { x: 2 * width / 3, y: yOffset, width: width / 3, height: height }
-        ];
-    } else if (mode === 13) {
-        // 2x2 matrix: 4 panels
-        return [
-            { x: 0, y: yOffset + height / 2, width: width / 2, height: height / 2 },               // Top-left
-            { x: width / 2, y: yOffset + height / 2, width: width / 2, height: height / 2 },       // Top-right
-            { x: 0, y: yOffset, width: width / 2, height: height / 2 },                            // Bottom-left
-            { x: width / 2, y: yOffset, width: width / 2, height: height / 2 }                     // Bottom-right
         ];
     }
     return [];
@@ -1266,7 +1275,8 @@ function drawPanelDecoration(ctx, panel, borderThickness, cornerRadius, dotRadiu
 /**
  * Draw border decoration on canvas (black borders, rounded corners, white center dots)
  * @param {HTMLCanvasElement} canvas - Source canvas
- * @param {number} mode - Display mode (8, 9, 12, 13)
+ * @param {number} mode - Display mode (8, 9, or 12; the 2x2 Matrix is decorated
+ *   per-row via 8/9, so mode 13 is never passed here — see getPanelsForMode)
  * @returns {HTMLCanvasElement} Decorated canvas
  */
 function drawBorderDecoration(canvas, mode) {
@@ -1281,9 +1291,14 @@ function drawBorderDecoration(canvas, mode) {
     // Calculate top margin for white dots (dot diameter + border + small spacing)
     const topMargin = dotRadius * 2 + borderThickness + dotRadius;
 
-    // Create new canvas with extra space at top for white dots
+    // Create new canvas with extra space at top for white dots.
+    // Request a read-optimized (CPU-backed) 2D context up front: the decorated
+    // canvas is read back via getImageData for the BMP/TIFF encoders, and a later
+    // getContext('2d', {willReadFrequently:true}) on the same canvas is ignored
+    // (attributes only apply on first context creation), so it would otherwise
+    // force a slow GPU→CPU readback. Matches resizeCanvas()'s context options.
     const decoratedCanvas = canvasPool.acquire(width, height + topMargin);
-    const ctx = decoratedCanvas.getContext('2d', { willReadFrequently: false });
+    const ctx = decoratedCanvas.getContext('2d', { willReadFrequently: true });
 
     // Error handling if getContext returns null (consistent with every other
     // export path); release the just-acquired canvas so the pool is not leaked.
