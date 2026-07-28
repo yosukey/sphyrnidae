@@ -353,6 +353,7 @@
     "loadFailed": "Failed to load image.",
     "storageQuotaExceeded": "Storage is full. File history could not be saved.",
     "combineFailed": "Error occurred while combining images.",
+    "dialogTimeout": "No response to the confirmation dialog; loading was canceled.",
     "noMPOImages": "No valid stereo images found in MPO file.",
     "threeNotReady": "Three.js initialization not complete. Please reload the page.",
     "selectBothImages": "Please select both left and right images.",
@@ -399,6 +400,17 @@
       "recommendation": "Even dimensions are recommended for VR headsets and stereo displays",
       "trimInfo": "Trim: {{right}}px from right, {{bottom}}px from bottom",
       "trimOption": "Trim to even",
+      "cancelOption": "Cancel"
+    },
+    "resolutionMismatchDialog": {
+      "title": "Resolution Mismatch",
+      "description": "The left and right images have different resolutions.",
+      "leftSize": "Left: {{width}} x {{height}} px",
+      "rightSize": "Right: {{width}} x {{height}} px",
+      "targetInfo": "Adjusted size: {{width}} x {{height}} px (left and right alike)",
+      "recommendation": "\"Scale\" keeps the whole image and resizes both to the smaller dimensions, which can shift the aspect ratio slightly. \"Trim\" center-crops without resampling (best when scans just have slightly different borders).",
+      "scaleOption": "Scale to match",
+      "trimOption": "Trim to match",
       "cancelOption": "Cancel"
     },
     "exportLargeEstimateWarning": "Estimated export is very large ({{width}}x{{height}} / {{megapixels}}MP / about {{estimatedSize}}).\nIf it exceeds {{thresholdMegapixels}}MP or {{thresholdSize}}, saving/display may become unstable.",

@@ -11,6 +11,11 @@ import * as logger from '../utils/logger.js';
  * @typedef {'trim'|'cancel'} ValidationAction
  */
 
+/**
+ * Resolution-mismatch dialog options
+ * @typedef {'scale'|'trim'|'cancel'} MismatchAction
+ */
+
 let isDialogDisplaying = false;
 const dialogQueue = [];
 const DIALOG_TIMEOUT_MS = 30000;  // 30 second timeout for dialog display
@@ -19,6 +24,20 @@ const DIALOG_QUEUE_MAX = 5;       // Maximum queued dialogs; excess are rejected
 // Track the currently-displayed dialog's cleanup function
 // so clearDialogQueue can dismiss it and remove its event listeners
 let activeDialogCleanup = null;
+
+/**
+ * Build an error marking a dialog that was never answered, as opposed to a
+ * genuine processing failure. Callers check err.dialogTimeout so they can
+ * report the real reason instead of a generic "processing failed" message.
+ * @param {string} message - Error message
+ * @returns {Error}
+ * @private
+ */
+function dialogTimeoutError(message) {
+    const err = new Error(message);
+    err.dialogTimeout = true;
+    return err;
+}
 
 /**
  * Clear all pending dialogs in the queue
@@ -67,7 +86,7 @@ async function processDialogQueue() {
         // Set timeout for dialog display (prevent infinite wait)
         const timeoutPromise = new Promise((_, rejectTimeout) => {
             dialogTimeoutId = setTimeout(() => {
-                rejectTimeout(new Error('Dialog display timeout - user did not respond'));
+                rejectTimeout(dialogTimeoutError('Dialog display timeout - user did not respond'));
             }, DIALOG_TIMEOUT_MS);
         });
 
@@ -116,6 +135,27 @@ async function processDialogQueue() {
  * @returns {Promise<ValidationAction>} User selection
  */
 export function showPixelValidationDialog(issues, correction, format, abortSignal = null) {
+    return enqueueDialog(() => createAndShowDialog(issues, correction, format), abortSignal);
+}
+
+/**
+ * Show the resolution-mismatch dialog for dual-image loads
+ * @param {Object} dims - {leftWidth, leftHeight, rightWidth, rightHeight, targetWidth, targetHeight}
+ * @param {AbortSignal} [abortSignal] - Optional abort signal for cancellation
+ * @returns {Promise<MismatchAction>} User selection
+ */
+export function showResolutionMismatchDialog(dims, abortSignal = null) {
+    return enqueueDialog(() => createAndShowMismatchDialog(dims), abortSignal);
+}
+
+/**
+ * Enqueue a dialog request into the serialized FIFO queue
+ * @param {() => Promise<any>} showFn - Function that creates and shows the dialog
+ * @param {AbortSignal} [abortSignal] - Optional abort signal for cancellation
+ * @returns {Promise<any>} Dialog result
+ * @private
+ */
+function enqueueDialog(showFn, abortSignal = null) {
     return new Promise((resolve, reject) => {
         let didTimeout = false;
         let queueTimeoutId = null;
@@ -143,7 +183,7 @@ export function showPixelValidationDialog(issues, correction, format, abortSigna
         const queueEntry = {
             resolve: wrappedResolve,
             reject: wrappedReject,
-            showFn: () => createAndShowDialog(issues, correction, format),
+            showFn,
             abortSignal
         };
         dialogQueue.push(queueEntry);
@@ -164,7 +204,7 @@ export function showPixelValidationDialog(issues, correction, format, abortSigna
                 if (idx !== -1) {
                     dialogQueue.splice(idx, 1);
                 }
-                reject(new Error('Dialog queue processing timeout'));
+                reject(dialogTimeoutError('Dialog queue processing timeout'));
             }
         }, DIALOG_TIMEOUT_MS + 5000);  // Allow some buffer beyond inner timeout
 
@@ -349,6 +389,167 @@ function createAndShowDialog(issues, correction, format) {
         } catch (err) {
             // Catch DOM creation errors or translation errors
             logger.error('PixelValidation','[PixelValidation] Dialog creation error:', err);
+            reject(new Error(`Failed to create dialog: ${err.message}`));
+        }
+    });
+}
+
+/**
+ * Internal function to create and display the resolution-mismatch dialog
+ * (All concurrent calls are serialized through the queue)
+ * @param {Object} dims - {leftWidth, leftHeight, rightWidth, rightHeight, targetWidth, targetHeight}
+ * @returns {Promise<MismatchAction>}
+ * @private
+ */
+function createAndShowMismatchDialog(dims) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Remove any existing dialog (safe now that we're serialized)
+            const existingDialog = document.getElementById('resolutionMismatchDialog');
+            if (existingDialog) {
+                existingDialog.remove();
+            }
+
+            // Create the dialog
+            const dialog = document.createElement('div');
+            dialog.id = 'resolutionMismatchDialog';
+            dialog.className = 'dialog-overlay';
+            dialog.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+            `;
+
+            // Build the dialog box (XSS protection: use DOM API)
+            const dialogBox = document.createElement('div');
+            dialogBox.className = 'dialog-box';
+            dialogBox.style.cssText = `
+                background: var(--panel-bg, #2a2a2a);
+                border-radius: 8px;
+                padding: 20px;
+                max-width: 400px;
+                color: var(--text-color, #e0e0e0);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            `;
+
+            const title = document.createElement('h3');
+            title.style.cssText = 'margin: 0 0 15px 0; font-size: 16px; color: #ffcc00;';
+            title.textContent = window.t?.('messages.resolutionMismatchDialog.title') ?? 'Resolution Mismatch';
+
+            const infoContainer = document.createElement('div');
+            infoContainer.style.cssText = 'margin-bottom: 15px; font-size: 14px; line-height: 1.5;';
+            const infoLines = [
+                window.t?.('messages.resolutionMismatchDialog.description') ?? 'The left and right images have different resolutions.',
+                window.t?.('messages.resolutionMismatchDialog.leftSize', { width: dims.leftWidth, height: dims.leftHeight }) ?? `Left: ${dims.leftWidth} x ${dims.leftHeight} px`,
+                window.t?.('messages.resolutionMismatchDialog.rightSize', { width: dims.rightWidth, height: dims.rightHeight }) ?? `Right: ${dims.rightWidth} x ${dims.rightHeight} px`,
+                window.t?.('messages.resolutionMismatchDialog.targetInfo', { width: dims.targetWidth, height: dims.targetHeight }) ?? `Adjusted size: ${dims.targetWidth} x ${dims.targetHeight} px (both eyes)`
+            ];
+            infoLines.forEach((line, index) => {
+                if (index > 0) {
+                    infoContainer.appendChild(document.createElement('br'));
+                }
+                infoContainer.appendChild(document.createTextNode(line));
+            });
+
+            const recommendation = document.createElement('p');
+            recommendation.style.cssText = 'font-size: 12px; color: #aaa; margin-bottom: 15px;';
+            recommendation.textContent = window.t?.('messages.resolutionMismatchDialog.recommendation') ?? '"Scale" keeps the full image and resizes to the smaller dimensions. "Trim" center-crops without resampling (best when scans just have slightly different borders).';
+
+            dialogBox.appendChild(title);
+            dialogBox.appendChild(infoContainer);
+            dialogBox.appendChild(recommendation);
+
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap;';
+
+            // .modern-btn is width:100%, which with three buttons would put each on
+            // its own row. Size them to their labels instead and let the row wrap
+            // only when the labels genuinely do not fit.
+            const actionButtonStyle = 'padding: 8px 16px; width: auto; flex: 0 1 auto; margin-bottom: 0;';
+
+            const scaleBtn = document.createElement('button');
+            scaleBtn.id = 'resolutionMismatchScale';
+            scaleBtn.className = 'modern-btn primary';
+            scaleBtn.style.cssText = actionButtonStyle;
+            scaleBtn.textContent = window.t?.('messages.resolutionMismatchDialog.scaleOption') ?? 'Scale to match';
+
+            const trimBtn = document.createElement('button');
+            trimBtn.id = 'resolutionMismatchTrim';
+            trimBtn.className = 'modern-btn secondary';
+            trimBtn.style.cssText = actionButtonStyle;
+            trimBtn.textContent = window.t?.('messages.resolutionMismatchDialog.trimOption') ?? 'Trim to match';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.id = 'resolutionMismatchCancel';
+            cancelBtn.className = 'modern-btn secondary';
+            cancelBtn.style.cssText = actionButtonStyle;
+            cancelBtn.textContent = window.t?.('messages.resolutionMismatchDialog.cancelOption') ?? 'Cancel';
+
+            actions.appendChild(scaleBtn);
+            actions.appendChild(trimBtn);
+            actions.appendChild(cancelBtn);
+            dialogBox.appendChild(actions);
+            dialog.appendChild(dialogBox);
+
+            document.body.appendChild(dialog);
+
+            let didResolve = false;
+
+            // Set up event listeners
+            const cleanup = () => {
+                // Unregister from active dialog tracking
+                activeDialogCleanup = null;
+                // Check if dialog still exists before removing
+                if (dialog && dialog.parentNode) {
+                    dialog.remove();
+                }
+                // Explicitly remove keydown listener (prevent memory leaks)
+                document.removeEventListener('keydown', handleKeydown);
+                // Remove button listeners
+                scaleBtn.removeEventListener('click', onScale);
+                trimBtn.removeEventListener('click', onTrim);
+                cancelBtn.removeEventListener('click', onCancel);
+            };
+
+            const settle = (action) => {
+                if (!didResolve) {
+                    didResolve = true;
+                    cleanup();
+                    resolve(action);
+                }
+            };
+
+            // Register cleanup so clearDialogQueue / timeout can dismiss this dialog
+            activeDialogCleanup = () => settle('cancel');
+
+            // Cancel with the ESC key
+            const handleKeydown = (e) => {
+                if (e.key === 'Escape') {
+                    settle('cancel');
+                }
+            };
+
+            // Button event handlers
+            const onScale = () => settle('scale');
+            const onTrim = () => settle('trim');
+            const onCancel = () => settle('cancel');
+
+            // Attach event listeners
+            scaleBtn.addEventListener('click', onScale);
+            trimBtn.addEventListener('click', onTrim);
+            cancelBtn.addEventListener('click', onCancel);
+            document.addEventListener('keydown', handleKeydown);
+
+        } catch (err) {
+            // Catch DOM creation errors or translation errors
+            logger.error('PixelValidation','[PixelValidation] Mismatch dialog creation error:', err);
             reject(new Error(`Failed to create dialog: ${err.message}`));
         }
     });
