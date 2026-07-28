@@ -315,3 +315,85 @@ export function trimToEvenPixels(image, trimRight, trimBottom) {
 
     return canvas;
 }
+
+/**
+ * Compute the common target size for a mismatched stereo pair.
+ * The target is the minimum of each dimension, floored to even (ensureEven),
+ * so the normalized pair needs no further even-pixel validation downstream.
+ * @param {number} widthL - Left image width
+ * @param {number} heightL - Left image height
+ * @param {number} widthR - Right image width
+ * @param {number} heightR - Right image height
+ * @returns {{mismatch: boolean, targetWidth: number, targetHeight: number}}
+ */
+export function computeDualNormalizationTarget(widthL, heightL, widthR, heightR) {
+    return {
+        mismatch: widthL !== widthR || heightL !== heightR,
+        targetWidth: ensureEven(Math.min(widthL, widthR)),
+        targetHeight: ensureEven(Math.min(heightL, heightR))
+    };
+}
+
+/**
+ * Compute source offsets for a center crop. The leftover is split evenly;
+ * any extra odd pixel goes to the right/bottom edge (Math.floor).
+ * @param {number} srcWidth - Source width
+ * @param {number} srcHeight - Source height
+ * @param {number} targetWidth - Crop width
+ * @param {number} targetHeight - Crop height
+ * @returns {{sx: number, sy: number}}
+ */
+export function computeCenterCropOffsets(srcWidth, srcHeight, targetWidth, targetHeight) {
+    return {
+        sx: Math.max(0, Math.floor((srcWidth - targetWidth) / 2)),
+        sy: Math.max(0, Math.floor((srcHeight - targetHeight) / 2))
+    };
+}
+
+/**
+ * Normalize an image to targetWidth x targetHeight.
+ * mode 'crop': center-crop without resampling (best when scans merely have
+ *   slightly different borders).
+ * mode 'scale': non-uniform full-image resize with high-quality smoothing.
+ *   Single-step drawImage matches a multi-step (Lanczos-style) resampler up to
+ *   roughly 2x reduction, which covers the intended case of scans that differ by
+ *   a few pixels. Nothing bounds the ratio, so a wildly mismatched pair is
+ *   downscaled in one step and may show more aliasing; the dialog states both
+ *   resolutions so such a pair can be spotted and cancelled.
+ * @param {HTMLImageElement|HTMLCanvasElement|ImageBitmap} image - Source image
+ * @param {number} targetWidth - Target width
+ * @param {number} targetHeight - Target height
+ * @param {'crop'|'scale'} mode - Normalization mode
+ * @returns {HTMLCanvasElement|HTMLImageElement|ImageBitmap} Normalized canvas, or the source unchanged when it already matches
+ */
+export function normalizeImageToSize(image, targetWidth, targetHeight, mode) {
+    if (image.width === targetWidth && image.height === targetHeight) {
+        return image;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        logger.error('PixelUtils', 'Failed to get 2D context for normalizeImageToSize');
+        return canvas;
+    }
+
+    // Cropping can only remove pixels. ensureEven clamps to a 2px minimum, so a
+    // 1px-wide source can be asked for a larger target; scaling handles that
+    // without reading outside the bitmap.
+    const canCrop = mode === 'crop' && image.width >= targetWidth && image.height >= targetHeight;
+
+    if (canCrop) {
+        const { sx, sy } = computeCenterCropOffsets(image.width, image.height, targetWidth, targetHeight);
+        ctx.drawImage(image, sx, sy, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight);
+    } else {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, targetWidth, targetHeight);
+    }
+
+    return canvas;
+}

@@ -12,8 +12,8 @@ import { sendWorkerMessage } from './loader-worker.js';
 import { readExifDataFromBuffer, getCurrentExifToken, syncActiveExifState } from './loader-exif.js';
 import { showLoadingProgress, hideLoadingProgress } from './loader-ui-progress.js';
 import { updateSceneWithImage, getMaxTextureSize } from '../rendering/renderer.js';
-import { ensureEven } from '../utils/pixel-utils.js';
-import { validateDualImages } from './loader-pixel-validation.js';
+import { ensureEven, computeDualNormalizationTarget, normalizeImageToSize } from '../utils/pixel-utils.js';
+import { validateDualImages, showResolutionMismatchDialog } from './loader-pixel-validation.js';
 import { resetUIStateAfterLoadError } from './loader-ui-progress.js';
 import { readFileAsArrayBuffer, loadImageFromUrl, canvasToBlobAsync } from './loader-utils.js';
 import { clearPreviousImageState } from './loader-state.js';
@@ -324,18 +324,42 @@ export async function loadDualImageFiles(fileLeft, fileRight, exifToken, myToken
             ]);
             safeProgress(40);
 
-            // Resolution check
-            if (imgL.width !== imgR.width || imgL.height !== imgR.height) {
-                throw new Error(window.t?.('messages.resolutionMismatch', {
+            // Resolution check — offer scale/trim/cancel instead of hard-failing, so
+            // legitimately mismatched pairs (e.g. separately scanned antique stereo
+            // photos) can still be loaded.
+            let normalizedL = imgL;
+            let normalizedR = imgR;
+            const target = computeDualNormalizationTarget(imgL.width, imgL.height, imgR.width, imgR.height);
+            if (target.mismatch) {
+                const action = await showResolutionMismatchDialog({
                     leftWidth: imgL.width,
                     leftHeight: imgL.height,
                     rightWidth: imgR.width,
-                    rightHeight: imgR.height
-                }) ?? `Resolution mismatch: L=${imgL.width}x${imgL.height}, R=${imgR.width}x${imgR.height}`);
+                    rightHeight: imgR.height,
+                    targetWidth: target.targetWidth,
+                    targetHeight: target.targetHeight
+                });
+                if (action === 'cancel') {
+                    // The cancel may have been forced by a newer load's clearDialogQueue();
+                    // in that case do not touch the newer load's progress UI.
+                    if (!isStale()) {
+                        hideLoadingProgress();
+                        resetUIStateAfterLoadError();
+                    }
+                    return;
+                }
+                // The dialog's 'trim' means center-crop here, unlike the edge trim of
+                // the odd-pixel validation below. That validation finds nothing to do
+                // on a normalized pair — the target is the per-axis minimum floored to
+                // even — so the user is never asked twice in a row (see
+                // tests/pixel-utils.test.mjs).
+                const normalizeMode = action === 'scale' ? 'scale' : 'crop';
+                normalizedL = normalizeImageToSize(imgL, target.targetWidth, target.targetHeight, normalizeMode);
+                normalizedR = normalizeImageToSize(imgR, target.targetWidth, target.targetHeight, normalizeMode);
             }
 
             // Pixel validation (for odd pixels)
-            const validation = await validateDualImages(imgL, imgR);
+            const validation = await validateDualImages(normalizedL, normalizedR);
             if (validation.action === 'cancel') {
                 // The cancel may have been forced by a newer load's clearDialogQueue();
                 // in that case do not touch the newer load's progress UI.
@@ -389,8 +413,9 @@ export async function loadDualImageFiles(fileLeft, fileRight, exifToken, myToken
                     // leftImageData/rightImageData were transferred to the worker —
                     // this error is only thrown by the worker AFTER receiving the
                     // message, so their buffers are detached here. Re-extract fresh
-                    // ImageData from the still-alive source images (leftUrl/rightUrl
-                    // are revoked only in the outer finally) for the fallback.
+                    // ImageData from validation.imgL/imgR, which are still alive:
+                    // either the decoded images (leftUrl/rightUrl are revoked only in
+                    // the outer finally) or canvases produced upstream.
                     sbsBuffer = await createSBSOnMainThread(
                         extractImageData(validation.imgL),
                         extractImageData(validation.imgR)
@@ -476,7 +501,13 @@ export async function loadDualImageFiles(fileLeft, fileRight, exifToken, myToken
         // Skip the error toast / progress teardown if a newer load already owns the
         // shared UI, so a stale dual-load failure cannot disrupt the in-flight load.
         if (!isStale()) {
-            showToast(window.t?.('messages.combineFailed') ?? 'Failed to combine images', 'error');
+            // An unanswered dialog is not a processing failure; saying "failed to
+            // combine" would be wrong, since combining never started.
+            if (err?.dialogTimeout) {
+                showToast(window.t?.('messages.dialogTimeout') ?? 'No response to the confirmation dialog; loading was canceled.', 'warning');
+            } else {
+                showToast(window.t?.('messages.combineFailed') ?? 'Failed to combine images', 'error');
+            }
             hideLoadingProgress();
             // Re-enable the load controls / file inputs, matching every other load
             // failure path (loader.js, loader-mpo.js, the cancel path above). Without
