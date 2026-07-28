@@ -239,8 +239,17 @@ export async function processMPOFile(file, loadTextureCallback, exifToken, myTok
         // Detailed feedback based on error type
         let userMessage = '';
         let errorType = 'unknown';
+        // 'error' for genuine failures; an unanswered dialog is only a warning.
+        let toastType = 'error';
 
-        if (err.message) {
+        if (err?.dialogTimeout) {
+            // An unanswered dialog is not a processing failure. Checked before the
+            // message-substring chain below, whose 'timeout' branch would otherwise
+            // blame the file size for the user simply not clicking a button.
+            errorType = 'dialog_timeout';
+            toastType = 'warning';
+            userMessage = window.t?.('messages.dialogTimeout') ?? 'No response to the confirmation dialog; loading was canceled.';
+        } else if (err.message) {
             const msg = err.message.toLowerCase();
 
             if (msg.includes('offscreen_canvas_not_supported')) {
@@ -289,7 +298,7 @@ export async function processMPOFile(file, loadTextureCallback, exifToken, myTok
             stack: err.stack
         });
 
-        safeToast(userMessage, 'error', 8000);
+        safeToast(userMessage, toastType, 8000);
         safeHideProgress();
         safeResetUI();
     }

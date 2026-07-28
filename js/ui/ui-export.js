@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { state, CONSTANTS, getModeLayout, BASE_URL } from '../globals.js';
 import { updateMeshScaleForMode, updateUniforms, rebuildShaderForMode, syncInterlaceParityOffset, getMaxTextureSize } from '../rendering/renderer.js';
 import { ensureEven } from '../utils/pixel-utils.js';
+import { setPixelDimensionsInExifSegment } from '../loaders/loader-exif.js';
 import { getModeName, is3DTVModeApplicable } from '../mode-utils.js';
 import { alignTransformToRotZoom } from '../rendering/alignment-geometry.js';
 import * as logger from '../utils/logger.js';
@@ -669,6 +670,14 @@ async function createMpoBlob(appState, eyeWidth, eyeHeight, enableResize, resize
         targetHeight = Math.max(2, ensureEven(Math.round(eyeHeight * resizeScale)));
     }
 
+    // Size actually encoded into each eye JPEG, assigned from the canvas below
+    // rather than from targetWidth/Height, since the no-resize branch copies the
+    // renderer canvas at its own size. Used to patch the EXIF dimension tags so
+    // they match the bytes written. Left deliberately unset here: seeding it with
+    // targetWidth would reintroduce the assumption this exists to avoid.
+    let encodedEyeWidth;
+    let encodedEyeHeight;
+
     let leftBlob, rightBlob;
     try {
         // Modes 4/5 map a single eye across the entire mesh, so the layout
@@ -715,6 +724,8 @@ async function createMpoBlob(appState, eyeWidth, eyeHeight, enableResize, resize
             tempCtxL.drawImage(leftCanvas, 0, 0);
             leftCanvas = tempCanvas;
         }
+        encodedEyeWidth = leftCanvas.width;
+        encodedEyeHeight = leftCanvas.height;
 
         // Right eye (mode=5)
         appState.material.uniforms.mode.value = 5;
@@ -777,8 +788,17 @@ async function createMpoBlob(appState, eyeWidth, eyeHeight, enableResize, resize
         const swapped = appState.params.swapLR;
         const leftSeg = swapped ? appState.exifRawSegmentRight : appState.exifRawSegmentLeft;
         const rightSeg = swapped ? appState.exifRawSegmentLeft : appState.exifRawSegmentRight;
-        if (leftSeg) leftData = injectExifIntoJpeg(leftData, leftSeg);
-        if (rightSeg) rightData = injectExifIntoJpeg(rightData, rightSeg);
+        // Each eye JPEG is encodedEyeWidth x encodedEyeHeight, which differs from
+        // the source whenever crop, resize, even-pixel trim, or left/right
+        // resolution normalization applied.
+        if (leftSeg) {
+            leftData = injectExifIntoJpeg(leftData,
+                setPixelDimensionsInExifSegment(leftSeg, encodedEyeWidth, encodedEyeHeight));
+        }
+        if (rightSeg) {
+            rightData = injectExifIntoJpeg(rightData,
+                setPixelDimensionsInExifSegment(rightSeg, encodedEyeWidth, encodedEyeHeight));
+        }
     }
 
     return createMpoFromJpegs(leftData, rightData);
@@ -1838,8 +1858,21 @@ export async function saveImage(updateZoomDisplay) {
                     && state.exportOptions.preserveExif
                     && state.exifRawSegment) {
                 const jpegBytes = new Uint8Array(await blob.arrayBuffer());
-                const withExif = injectExifIntoJpeg(jpegBytes, state.exifRawSegment);
-                blob = new Blob([withExif], { type: 'image/jpeg' });
+                // The stored segment describes one source eye; this output is the
+                // composited frame (layout multiplier, crop, resize, decoration all
+                // applied). Take the size from the canvas that was just encoded so
+                // the tags cannot drift from the pixels.
+                const segment = setPixelDimensionsInExifSegment(
+                    state.exifRawSegment, outputCanvas.width, outputCanvas.height);
+                const withExif = injectExifIntoJpeg(jpegBytes, segment);
+                // Re-wrap only when the splice actually happened. On the fallback
+                // path above the browser may have encoded PNG despite the JPEG
+                // request; injectExifIntoJpeg then no-ops on the missing SOI, and
+                // re-wrapping would relabel those bytes as JPEG right after the
+                // code above corrected the extension to match the real format.
+                if (withExif !== jpegBytes) {
+                    blob = new Blob([withExif], { type: 'image/jpeg' });
+                }
             }
         }
 

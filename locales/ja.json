@@ -353,6 +353,7 @@
     "loadFailed": "画像の読み込みに失敗しました。",
     "storageQuotaExceeded": "ストレージが満杯です。ファイル履歴を保存できませんでした。",
     "combineFailed": "画像の結合処理中にエラーが発生しました。",
+    "dialogTimeout": "確認ダイアログへの応答がなかったため、読み込みを中止しました。",
     "noMPOImages": "MPOファイルから有効なステレオ画像が見つかりませんでした。",
     "threeNotReady": "Three.js の初期化が完了していません。ページを再読み込みしてください。",
     "selectBothImages": "左右両方の画像を選択してください。",
@@ -399,6 +400,17 @@
       "recommendation": "VRヘッドセットやステレオディスプレイでの表示には偶数サイズを推奨します",
       "trimInfo": "トリミング: 右端{{right}}px、下端{{bottom}}pxを削除",
       "trimOption": "トリミングして偶数化",
+      "cancelOption": "キャンセル"
+    },
+    "resolutionMismatchDialog": {
+      "title": "解像度の不一致",
+      "description": "左右の画像の解像度が異なります。",
+      "leftSize": "左: {{width}} x {{height}} px",
+      "rightSize": "右: {{width}} x {{height}} px",
+      "targetInfo": "調整後のサイズ: {{width}} x {{height}} px（左右とも）",
+      "recommendation": "「縮小」は画像全体を保ったまま小さい方のサイズに合わせます（縦横比がわずかに変わる場合があります）。「トリミング」は再サンプリングせずに中央を切り出します（スキャン画像の縁の差など、わずかな違いに適しています）。",
+      "scaleOption": "縮小して合わせる",
+      "trimOption": "トリミングして合わせる",
       "cancelOption": "キャンセル"
     },
     "exportLargeEstimateWarning": "書き出し見積もりが非常に大きいです（{{width}}x{{height}} / {{megapixels}}MP / 約{{estimatedSize}}）。\nしきい値: {{thresholdMegapixels}}MP または {{thresholdSize}} を超えると、保存や表示が不安定になる場合があります。",
