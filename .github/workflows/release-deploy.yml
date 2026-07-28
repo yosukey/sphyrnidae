@@ -231,7 +231,9 @@ jobs:
 
       - name: Verify release artifact
         run: |
-          node --test tests/alignment-geometry.test.mjs tests/pixel-utils.test.mjs tests/histogram.test.mjs tests/url-params.test.mjs
+          # Glob rather than an explicit list, so a newly added test file cannot
+          # silently go unrun in CI (matches the command documented in README.md).
+          node --test tests/*.test.mjs
           for file in $(find js -name '*.js' -type f) sw.js; do
             node --check "$file"
           done

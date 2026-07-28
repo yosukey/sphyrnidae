@@ -222,13 +222,14 @@ The following viewing modes are supported via the `mode` parameter (use the mode
 The committed regression tests are framework-free and require a current Node.js runtime:
 
 ```sh
-node --test tests/alignment-geometry.test.mjs tests/pixel-utils.test.mjs tests/histogram.test.mjs
+node --test tests/*.test.mjs
 ```
 
 The release workflow additionally performs JavaScript syntax checks, validates
 the Service Worker precache manifest, and verifies the import-map CSP hash after
 minification. Run the regression tests after changes to image geometry, crop,
-alignment, histogram, or pixel-format validation.
+alignment, histogram, pixel-format validation, URL parameters, or EXIF metadata
+written on export.
 
 ## License
 

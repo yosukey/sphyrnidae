@@ -132,6 +132,121 @@ function resetOrientationInExifSegment(segment) {
 }
 
 /**
+ * Return a copy of an EXIF APP1 segment whose recorded pixel dimensions describe
+ * the image the segment is about to be written into.
+ *
+ * The stored segment is captured from the source file and re-embedded verbatim on
+ * export, so its dimension tags keep describing the original whenever the output
+ * differs: export resize, crop, even-pixel trim, the layout multiplier of the
+ * export mode (a Full SBS frame is twice an eye wide), border decoration, and the
+ * left/right resolution normalization. A reader that trusts EXIF over the JPEG SOF
+ * would then get the wrong size, so rewrite the tags to the real output size.
+ * Same reasoning as resetOrientationInExifSegment above, applied to geometry.
+ *
+ * Returns a COPY (unlike resetOrientationInExifSegment, which mutates a freshly
+ * sliced segment): this runs at export time on the shared state.exifRawSegment*,
+ * which must stay pristine for the next export at a different size.
+ *
+ * Only existing tags are rewritten. Tags are never added, because growing the
+ * segment would move every subsequent IFD offset and require rebuilding it. For
+ * the same reason a SHORT-typed tag asked to hold more than 65535 is left at its
+ * old value rather than truncated: widening it to a LONG would grow the entry.
+ * That needs an output side longer than 65535px, well past any GPU texture limit.
+ *
+ * IFD1 (the thumbnail directory) is deliberately not visited — its
+ * ImageWidth/ImageLength describe the embedded thumbnail, not this image.
+ *
+ * @param {Uint8Array} segment - Stored APP1 segment (FFE1 + length + "Exif\0\0" + TIFF)
+ * @param {number} width - Actual output width in pixels
+ * @param {number} height - Actual output height in pixels
+ * @returns {Uint8Array} Patched copy, or the input unchanged if it cannot be parsed
+ */
+export function setPixelDimensionsInExifSegment(segment, width, height) {
+    if (!segment || segment.length < 18) return segment;
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
+        return segment;
+    }
+
+    const out = new Uint8Array(segment);
+    const tiffStart = 10;
+    const littleEndian = (out[tiffStart] === 0x49);  // 'I' = little, 'M' = big
+    const readU16 = (off) => littleEndian
+        ? out[off] | (out[off + 1] << 8)
+        : (out[off] << 8) | out[off + 1];
+    const readU32 = (off) => littleEndian
+        ? (out[off] | (out[off + 1] << 8) | (out[off + 2] << 16) | (out[off + 3] << 24)) >>> 0
+        : ((out[off] << 24) | (out[off + 1] << 16) | (out[off + 2] << 8) | out[off + 3]) >>> 0;
+    const writeU16 = (off, val) => {
+        if (littleEndian) {
+            out[off] = val & 0xFF;
+            out[off + 1] = (val >> 8) & 0xFF;
+        } else {
+            out[off] = (val >> 8) & 0xFF;
+            out[off + 1] = val & 0xFF;
+        }
+    };
+    const writeU32 = (off, val) => {
+        if (littleEndian) {
+            out[off] = val & 0xFF;
+            out[off + 1] = (val >> 8) & 0xFF;
+            out[off + 2] = (val >> 16) & 0xFF;
+            out[off + 3] = (val >>> 24) & 0xFF;
+        } else {
+            out[off] = (val >>> 24) & 0xFF;
+            out[off + 1] = (val >> 16) & 0xFF;
+            out[off + 2] = (val >> 8) & 0xFF;
+            out[off + 3] = val & 0xFF;
+        }
+    };
+
+    // A count-1 SHORT or LONG is stored inline in the entry's 4-byte value field,
+    // so the segment length never changes. Any other type/count means the field
+    // holds an offset instead, and overwriting it would corrupt the IFD.
+    const writeEntryValue = (entryOff, val) => {
+        const type = readU16(entryOff + 2);
+        if (readU32(entryOff + 4) !== 1) return;
+        if (type === 3) {
+            if (val <= 0xFFFF) writeU16(entryOff + 8, val);
+        } else if (type === 4) {
+            writeU32(entryOff + 8, val);
+        }
+    };
+
+    if (readU16(tiffStart + 2) !== 42) return segment;  // Not a TIFF header
+    const ifd0Start = tiffStart + readU32(tiffStart + 4);
+    // An IFD cannot start inside the 8-byte TIFF header. Rejecting that also
+    // rejects a zero offset, which would otherwise make the byte-order mark
+    // read as an entry count and send the loop scanning non-IFD bytes.
+    if (ifd0Start < tiffStart + 8 || ifd0Start + 2 > out.length) return segment;
+
+    // IFD0 carries ImageWidth/ImageLength (often absent in JPEG EXIF) and the
+    // pointer to the EXIF sub-IFD that holds PixelXDimension/PixelYDimension.
+    let exifIfdStart = 0;
+    const ifd0Entries = readU16(ifd0Start);
+    for (let i = 0; i < ifd0Entries; i++) {
+        const entryOff = ifd0Start + 2 + i * 12;
+        if (entryOff + 12 > out.length) break;
+        const tag = readU16(entryOff);
+        if (tag === 0x0100) writeEntryValue(entryOff, width);        // ImageWidth
+        else if (tag === 0x0101) writeEntryValue(entryOff, height);  // ImageLength
+        else if (tag === 0x8769) exifIfdStart = tiffStart + readU32(entryOff + 8);
+    }
+
+    if (exifIfdStart >= tiffStart + 8 && exifIfdStart + 2 <= out.length) {
+        const exifEntries = readU16(exifIfdStart);
+        for (let i = 0; i < exifEntries; i++) {
+            const entryOff = exifIfdStart + 2 + i * 12;
+            if (entryOff + 12 > out.length) break;
+            const tag = readU16(entryOff);
+            if (tag === 0xA002) writeEntryValue(entryOff, width);         // PixelXDimension
+            else if (tag === 0xA003) writeEntryValue(entryOff, height);   // PixelYDimension
+        }
+    }
+
+    return out;
+}
+
+/**
  * Read EXIF info using ExifReader (single file)
  * Race condition mitigation: do not overwrite newer state with stale results
  * For single file loads, store as left-eye EXIF and set right-eye to null

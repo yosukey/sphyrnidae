@@ -1091,7 +1091,13 @@ export async function loadFileWithFormat(file, format, skipExifRead = false, myT
             err.__loadFileWithFormatHandled = true;
         } else if (!err?.__loadFileWithFormatHandled) {
             logger.error('Loader','ImageBitmap creation error:', err);
-            showToast(window.t?.('messages.loadFailed') ?? 'Failed to load file', 'error');
+            // An unanswered pixel-validation dialog is not a load failure; report
+            // the real reason instead of a generic one.
+            if (err?.dialogTimeout) {
+                showToast(window.t?.('messages.dialogTimeout') ?? 'No response to the confirmation dialog; loading was canceled.', 'warning');
+            } else {
+                showToast(window.t?.('messages.loadFailed') ?? 'Failed to load file', 'error');
+            }
             hideLoadingProgress();
             resetUIStateAfterLoadError();
             err.__loadFileWithFormatHandled = true;
