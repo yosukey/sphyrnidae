@@ -1467,6 +1467,19 @@
                 <button id="closeViewerHelpModalBtn" class="modal-close-btn">×</button>
             </div>
             <div class="modal-body viewer-help-body" style="text-align: left;">
+                <!-- Branding block. Viewer mode started from a URL (?src= / ?list=) hides
+                     the exit button because there is no normal mode to return to, so this
+                     help modal is the only place that identifies which app is showing the
+                     image and where it lives. The link's href/text are filled in from
+                     APP_SITE_URL by setupViewerControlBar(). -->
+                <div class="viewer-help-brand">
+                    <img class="viewer-help-brand-icon" src="icons/icon-192x192.png" alt="Sphyrnidae icon" width="56" height="56">
+                    <div class="viewer-help-brand-text">
+                        <div class="viewer-help-brand-name">Sphyrnidae</div>
+                        <div class="viewer-help-brand-tagline" data-i18n="viewer.helpBrandTagline">Stereo image viewer</div>
+                        <a id="viewerHelpSiteLink" class="viewer-help-brand-link" href="" target="_blank" rel="noopener noreferrer"></a>
+                    </div>
+                </div>
                 <h3 data-i18n="viewer.helpKeyboardTitle">Keyboard Navigation</h3>
                 <ul>
                     <li><strong>N</strong> - <span data-i18n="viewer.helpKeyboardNext">Next image</span></li>
