@@ -290,6 +290,55 @@
   color: var(--text-tertiary);
 }
 
+/* Branding block at the top of the viewer help modal: the only app identification
+   available when viewer mode was started from a URL (the exit button is hidden
+   there, so the menu with the title and About panel is out of reach). */
+.viewer-help-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0 0 var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.viewer-help-brand-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius-lg);
+}
+
+.viewer-help-brand-text {
+  min-width: 0;
+}
+
+.viewer-help-brand-name {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.viewer-help-brand-tagline {
+  margin-top: 2px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.viewer-help-brand-link {
+  display: inline-block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-md);
+  color: var(--accent-blue);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.viewer-help-brand-link:hover {
+  text-decoration: underline;
+}
+
 /* ===== Open options card ===== */
 .open-options {
   display: flex;
