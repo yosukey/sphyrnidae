@@ -160,6 +160,12 @@ export const BASE_URL = typeof window !== 'undefined' ? window.location.origin :
 
 export const REPOSITORY_URL = 'https://github.com/yosukey/sphyrnidae';
 
+// APP_SITE_URL - the official hosted application. Unlike BASE_URL (wherever this
+// copy happens to be served from) this is the canonical address shown to users,
+// e.g. in the viewer help modal, where a URL-launched viewer offers no other way
+// to tell what app is showing the image.
+export const APP_SITE_URL = 'https://sphyrnidae.pages.dev/';
+
 // Version info (re-exported from version.js)
 export { APP_VERSION, BUILD_DATE, COMMIT_SHA };
 
