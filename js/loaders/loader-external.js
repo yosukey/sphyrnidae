@@ -75,9 +75,38 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
     state.viewerPanY = 0;
     state.viewerFitScale = 1.0;
 
-    // Apply mode if specified
+    // Display-mode state captured before the URL's mode is applied, so a failed
+    // load can roll it back (see the catch block).
+    const preUrlDisplayMode = {
+        params: state.params.mode,
+        viewer: state.viewerDisplayMode,
+        select: document.getElementById('viewerDisplayMode')?.value ?? null
+    };
+
+    // Point the viewer bar's mode dropdown — and with it the viewer's remembered
+    // mode, as applyViewerDisplayMode does, since external image mode is a viewer
+    // session — at a display mode. Used to apply this URL's `mode=` below and, when
+    // the load is discarded, to fall back to the mode actually in effect.
+    const syncViewerModeSelect = (targetMode) => {
+        if (!Number.isInteger(targetMode)) return;
+        state.viewerDisplayMode = targetMode;
+        const viewerModeSelect = document.getElementById('viewerDisplayMode');
+        if (viewerModeSelect && viewerModeSelect.value !== String(targetMode)) {
+            viewerModeSelect.value = String(targetMode);
+        }
+    };
+
+    // Apply mode if specified, and sync the viewer bar's mode dropdown with it.
+    // The ?list= path routes every per-image mode through applyViewerDisplayMode(),
+    // which syncs the dropdown; this path sets state.params.mode directly, so
+    // nothing else updated the <select> and it kept showing its first option
+    // (anaglyph) while the image rendered in the requested mode. Every mode
+    // reachable from ?mode= has a matching <option> (MODE_NAME_MAP <-> the
+    // #viewerDisplayMode options, locked in by tests/mode-select-options.test.mjs),
+    // so the assignment can never leave the select blank.
     if (mode !== null && typeof mode === 'number') {
         state.params.mode = mode;
+        syncViewerModeSelect(mode);
     }
 
     const menuPanel = document.getElementById('ui-container');
@@ -342,6 +371,14 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
             await loadPromise;
         }
 
+        // Reconcile the dropdown with the display mode that actually ended up in
+        // effect. Normally that is this URL's mode and the call is a no-op, but a
+        // local file dropped during the fetch runs clearPreviousImageState() in
+        // between, which resets state.params.mode to the default: whichever of the
+        // two loads then reaches the screen, the bar must show the mode it is
+        // rendered with rather than the one this URL asked for.
+        syncViewerModeSelect(state.params.mode);
+
         // If a newer load superseded this one during the fetch/decode, detach the
         // listener and do NOT arm the fallback: otherwise our once-listener would
         // fire on that unrelated image, or the 5s fallback would apply this URL's
@@ -415,6 +452,30 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
         // URL-originated session (which would force-trim odd images without a dialog
         // and hide the viewer Exit button). It is set true before this load starts.
         state.loadedFromUrlParams = false;
+
+        // Roll back the URL-specified display mode. It was applied to state.params
+        // and to the viewer dropdown before the fetch, but no image was ever shown,
+        // so leaving it set strands the app back in normal mode with a mode nothing
+        // on screen uses and a viewer dropdown pointing at it (which would then seed
+        // state.viewerDisplayMode for the next viewer session).
+        if (mode !== null && typeof mode === 'number') {
+            if (isSuperseded()) {
+                // A newer load owns state.params.mode; only the dropdown needs to
+                // stop advertising this failed load's mode.
+                syncViewerModeSelect(state.params.mode);
+            } else {
+                state.params.mode = preUrlDisplayMode.params;
+                state.viewerDisplayMode = preUrlDisplayMode.viewer;
+                // Restore the dropdown's own previous value rather than deriving it
+                // from the mode: the menu's #displayMode and the viewer bar's
+                // #viewerDisplayMode are independent controls, so the two can legally
+                // disagree outside viewer mode.
+                const viewerModeSelect = document.getElementById('viewerDisplayMode');
+                if (viewerModeSelect && preUrlDisplayMode.select !== null) {
+                    viewerModeSelect.value = preUrlDisplayMode.select;
+                }
+            }
+        }
 
         // Remove only the known external-image params from the URL to prevent
         // re-triggering on reload. Any other query params are intentionally preserved.

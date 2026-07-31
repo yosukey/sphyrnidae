@@ -2,7 +2,7 @@
  * ui-viewer.js
  * UI features for viewer mode
  */
-import { state, CONSTANTS } from '../globals.js';
+import { state, CONSTANTS, APP_SITE_URL } from '../globals.js';
 import { is3DTVModeApplicable } from '../mode-utils.js';
 import { VALID_STEREO_FORMATS, parseFormatParam, parseModeParam, parseShiftParam, parseRotationParam, parseZoomParam, parseCropParam } from '../url-params.js';
 import { isHttpUrl, safeDecodeURIComponent, sanitizeDisplayUrl } from '../loaders/loader-utils.js';
@@ -860,6 +860,22 @@ export function setupViewerControlBar() {
                 viewerHelpModal.style.display = 'none';
             }
         }, { signal });
+    }
+
+    // Fill in the help modal's branding link from the shared constant (the markup
+    // ships with an empty href), mirroring how the About panel builds its
+    // repository link. The host alone is shown rather than the full URL so it
+    // stays readable on a narrow screen.
+    const viewerHelpSiteLink = document.getElementById('viewerHelpSiteLink');
+    if (viewerHelpSiteLink) {
+        viewerHelpSiteLink.href = APP_SITE_URL;
+        let label = APP_SITE_URL;
+        try {
+            label = new URL(APP_SITE_URL).host;
+        } catch {
+            // Keep the raw constant as the label if it is ever made non-absolute.
+        }
+        viewerHelpSiteLink.textContent = label;
     }
 
     // Display mode switch

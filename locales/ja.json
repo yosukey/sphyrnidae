@@ -210,6 +210,7 @@
     "fileCount_other": "{{count}} 個のファイル",
     "urlCount_one": "{{count}} 個のURL",
     "urlCount_other": "{{count}} 個のURL",
+    "helpBrandTagline": "ステレオ画像ビューワー",
     "helpTitle": "ビューワーヘルプ",
     "helpKeyboardTitle": "キーボードナビゲーション",
     "helpKeyboardNext": "次の画像",
