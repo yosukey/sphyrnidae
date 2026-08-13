@@ -44,6 +44,9 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
     const isSuperseded = () => myLoadToken !== null
         && typeof getFileLoadTokenCallback === 'function'
         && getFileLoadTokenCallback() !== myLoadToken;
+    // The viewer's display-mode handler, resolved before the load starts (see the
+    // import below) so applyResizeAndShift can call it synchronously.
+    let applyViewerDisplayModeFn = null;
 
     const storePrevDisplay = (element) => {
         if (!element) return;
@@ -267,6 +270,28 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
                 logger.warn('LoaderExternal','[External] Error during auto-fit resize:', err);
             }
 
+            // Re-apply the display mode through the viewer's shared handler now that
+            // the image (and its mesh) exist. ?src= is a viewer session, so an
+            // SBS/TaB display mode must switch the zoom/pan model to 3DTV exactly as
+            // the viewer bar's dropdown and the ?list= path do: each eye then zooms
+            // around the centre of its own half of the window, instead of the whole
+            // two-eye plane scaling as one (which reads as the left and right images
+            // stuck together). The pre-fetch assignment above only primes
+            // state.params.mode so the initial shader builds in the requested mode;
+            // the 3DTV flag cannot be primed the same way because handleFile() ->
+            // clearPreviousImageState() restores state.params from defaultParams
+            // (sbs3dtv: false) on every load, so it has to be set after the load —
+            // which is also when the ?list= path applies it. Without this the image
+            // rendered in the right mode but kept normal-mode zoom until the user
+            // touched the mode dropdown.
+            if (applyViewerDisplayModeFn) {
+                try {
+                    applyViewerDisplayModeFn(state.params.mode);
+                } catch (modeErr) {
+                    logger.warn('LoaderExternal', '[External] Error applying the viewer display mode:', modeErr);
+                }
+            }
+
             // Build the vertical-affine alignTransform from rotation/zoom FIRST, so
             // the vertical-shift step below can fold any clamp overflow into its a[7]
             // constant. Resolution-independent (no image dimensions needed), but must
@@ -324,6 +349,23 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
                 }
             }
         };
+
+        // Resolve the viewer's display-mode handler BEFORE the load, so the handler
+        // above can call it synchronously while stereo-image-loaded is still being
+        // dispatched. Awaiting the import inside that listener instead would defer
+        // the mode switch — and everything after it, including this URL's shift and
+        // alignment — past a microtask boundary, reopening the very staleness window
+        // isSuperseded() exists to close. The dynamic import avoids a static cycle
+        // (ui-viewer -> loader -> loader-external) and resolves from the module
+        // registry, since ui-viewer.js is already statically imported by the viewer
+        // loader. A failure here is not fatal: the image still loads, only without
+        // the viewer's 3DTV zoom model.
+        try {
+            const viewerModule = await import('../ui/ui-viewer.js');
+            applyViewerDisplayModeFn = viewerModule.applyViewerDisplayMode ?? null;
+        } catch (importErr) {
+            logger.warn('LoaderExternal', '[External] Viewer display-mode handler unavailable:', importErr);
+        }
 
         // Register the listener BEFORE starting the load. stereo-image-loaded is
         // dispatched synchronously inside updateSceneWithImage(), so attaching it
