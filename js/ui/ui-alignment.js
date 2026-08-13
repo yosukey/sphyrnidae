@@ -2,7 +2,7 @@
  * ui-alignment.js
  * Manage alignment UI controls (shift, swap, auto-alignment)
  */
-import { state, isSBSMode, is3DTVActive } from '../globals.js';
+import { state, is3DTVActive, getViewerDisplayScale } from '../globals.js';
 import {
     updateUniforms,
     updateMeshTransform,
@@ -220,12 +220,7 @@ export function setupAlignmentControls() {
                 if (scaleInput) scaleInput.value = state.viewerScale;
             }
             if (state.viewerMode || is3dtvMode) {
-                const effectiveScale = is3dtvMode
-                    ? state.viewerScale
-                    : (isSBSMode(state.params.mode)
-                        ? state.params.scale * state.viewerScale
-                        : state.params.scale);
-                if (updateViewerZoomDisplay) updateViewerZoomDisplay(effectiveScale);
+                if (updateViewerZoomDisplay) updateViewerZoomDisplay(getViewerDisplayScale());
             } else {
                 // Normal (non-viewer, non-3DTV) mode: fitImageToWindow only dispatches
                 // viewer-zoom-changed in viewer mode, and param-changed-externally

@@ -9,7 +9,7 @@
  * - Viewer mode click navigation
  */
 
-import { state, CONSTANTS, isSBSMode, is3DTVActive } from '../globals.js';
+import { state, CONSTANTS, isSBSMode, is3DTVActive, getViewerDisplayScale } from '../globals.js';
 import { updateUniforms, updateMeshTransform, fitImageToWindow } from '../rendering/renderer.js';
 import { handleFile, startViewerMode, clearPreviousImageState } from '../loaders/loader.js';
 import { cancelPendingUrlDialogLoad } from './ui-file-loading.js';
@@ -643,10 +643,9 @@ export function setupDoubleClick(canvas, signal) {
             e.preventDefault();
             fitImageToWindow();
             updateUniforms();
-            const effectiveScale = isSBSMode(state.params.mode)
-                ? state.params.scale * state.viewerScale
-                : state.params.scale;
-            callbacks.updateViewerZoomDisplay?.(effectiveScale);
+            // Shared rule: a 3DTV fit is zoomed by viewerScale alone, so the plain
+            // SBS formula reported the mesh fit scale for the double-click fit.
+            callbacks.updateViewerZoomDisplay?.(getViewerDisplayScale());
         }
     }, { signal });
 }
