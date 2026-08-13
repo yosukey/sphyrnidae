@@ -37,16 +37,29 @@ const readSource = (relPath) =>
     readFileSync(fileURLToPath(new URL(`../${relPath}`, import.meta.url)), 'utf8');
 
 /**
- * Drop comments so a mention of a function in prose cannot stand in for a real
- * call. These modules explain themselves at length — including naming the very
- * handler this test looks for — so searching the raw text would pass even after
- * the call itself was deleted.
+ * Prepare a module's source for the structural checks below.
+ *
+ * Two transforms, both required:
+ * - Comments are dropped so a mention of a function in prose cannot stand in for
+ *   a real call. These modules explain themselves at length — including naming
+ *   the very handler this test looks for — so searching the raw text would pass
+ *   even after the call itself was deleted. Only whole-line `//` comments are
+ *   removed (plus block comments): a general line-comment strip would cut at a
+ *   `//` inside a string or regex, and in the minified build — one long line —
+ *   that would blank the rest of the file.
+ * - Terser's boolean folding is undone. CI runs this suite against the RELEASE
+ *   artifact, i.e. after `terser --compress` (no --mangle) has rewritten every
+ *   source file in place, so `= true` reaches this test as `=!0`. Identifiers,
+ *   property names and parameter names survive that pass, which is what makes
+ *   these checks viable at all — but literals do not.
  * @param {string} src - JavaScript source
- * @returns {string} Source with block and line comments blanked out
+ * @returns {string} Comment-free source with folded booleans spelled out
  */
-const stripComments = (src) => src
+const prepareSource = (src) => src
     .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
+    .replace(/^[ \t]*\/\/[^\n]*$/gm, '')
+    .replace(/!0\b/g, 'true')
+    .replace(/!1\b/g, 'false');
 
 /**
  * Put the shared state into a known zoom configuration.
@@ -118,14 +131,16 @@ ok(state.defaultParams.sbs3dtv === false, 'defaultParams.sbs3dtv is false (3DTV 
 
 // ---- applyViewerDisplayMode() forces 3DTV on for a viewer session ----
 {
-    const viewerSrc = stripComments(readSource('js/ui/ui-viewer.js'));
+    const viewerSrc = prepareSource(readSource('js/ui/ui-viewer.js'));
     const fnStart = viewerSrc.indexOf('export function applyViewerDisplayMode');
     ok(fnStart !== -1, 'applyViewerDisplayMode() found in js/ui/ui-viewer.js');
     if (fnStart !== -1) {
-        // Bounded by the next top-level export, so the body cannot silently
-        // swallow the rest of the module and pass vacuously.
-        const nextExport = viewerSrc.indexOf('\nexport ', fnStart + 1);
-        const body = viewerSrc.slice(fnStart, nextExport === -1 ? viewerSrc.length : nextExport);
+        // Bounded by the next export declaration, so the body cannot silently
+        // swallow the rest of the module and pass vacuously. Searched as a
+        // pattern rather than "\nexport ": the minified build is a single line.
+        const rest = viewerSrc.slice(fnStart + 1);
+        const nextExport = rest.search(/\bexport\s+(?:async\s+)?(?:function|const|let|var|class)\b/);
+        const body = nextExport === -1 ? viewerSrc.slice(fnStart) : viewerSrc.slice(fnStart, fnStart + 1 + nextExport);
         ok(body.length > 0 && body.length < viewerSrc.length, 'applyViewerDisplayMode() body extracted');
         ok(/state\.viewerMode\s*&&\s*is3DTVModeApplicable\(mode\)/.test(body),
             'applyViewerDisplayMode() gates on viewer mode + 3DTV applicability');
@@ -144,7 +159,7 @@ ok(state.defaultParams.sbs3dtv === false, 'defaultParams.sbs3dtv is false (3DTV 
 // before the load and calls it through applyViewerDisplayModeFn, keeping its
 // stereo-image-loaded listener synchronous).
 for (const entryPoint of ['js/loaders/loader-external.js', 'js/loaders/loader-viewer.js']) {
-    const src = stripComments(readSource(entryPoint));
+    const src = prepareSource(readSource(entryPoint));
     ok(/\bapplyViewerDisplayMode\b/.test(src),
         `${entryPoint} obtains the shared applyViewerDisplayMode handler in code`);
     ok(/\bapplyViewerDisplayMode\w*\s*\([^)]/.test(src),
