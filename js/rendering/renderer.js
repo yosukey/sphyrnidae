@@ -3,7 +3,7 @@
 * Handles WebGL rendering and shader management with Three.js
 */
 import * as THREE from 'three';
-import { state, getModeLayout, DEBUG, isSBSMode, CONSTANTS, is3DTVActive } from '../globals.js';
+import { state, getModeLayout, DEBUG, CONSTANTS, is3DTVActive, getViewerDisplayScale } from '../globals.js';
 import { isFullSBSMode } from '../mode-utils.js';
 import { vertexShader, getFragmentShaderCached, getShaderGroup, clearShaderCache } from './shaders.js';
 import { ensureEven } from '../utils/pixel-utils.js';
@@ -1740,20 +1740,11 @@ export function fitImageToWindow() {
 
     window.dispatchEvent(new CustomEvent('param-changed-externally', { detail: { name: 'scale', value: fitScale } }));
 
-    // Update zoom display in viewer mode
+    // Update zoom display in viewer mode. getViewerDisplayScale() picks between
+    // viewerScale (3DTV), scale * viewerScale (viewer SBS) and scale, so the UI's
+    // own refresh paths can apply the identical rule.
     if (state.viewerMode) {
-        // Use viewerScale in 3DTV mode
-        // Non-3DTV SBS uses state.params.scale * state.viewerScale (same as wheel zoom)
-        // Otherwise use state.params.scale
-        let displayScale;
-        if (is3dtvMode) {
-            displayScale = state.viewerScale;
-        } else if (isSBSMode(state.params.mode)) {
-            displayScale = state.params.scale * state.viewerScale;
-        } else {
-            displayScale = state.params.scale;
-        }
-        window.dispatchEvent(new CustomEvent('viewer-zoom-changed', { detail: { scale: displayScale } }));
+        window.dispatchEvent(new CustomEvent('viewer-zoom-changed', { detail: { scale: getViewerDisplayScale() } }));
     }
 }
 

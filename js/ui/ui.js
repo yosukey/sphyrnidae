@@ -2,7 +2,7 @@
  * ui.js
  */
 import { showToast } from './ui-toast.js';
-import { state, DEBUG, CONSTANTS, getModeLayout, isCropSelectionAllowed, isSBSMode, APP_NAME, REPOSITORY_URL, APP_VERSION, BUILD_DATE, COMMIT_SHA } from '../globals.js';
+import { state, DEBUG, CONSTANTS, getModeLayout, isCropSelectionAllowed, getViewerDisplayScale, APP_NAME, REPOSITORY_URL, APP_VERSION, BUILD_DATE, COMMIT_SHA } from '../globals.js';
 import * as logger from '../utils/logger.js';
 import {
     updateUniforms,
@@ -847,11 +847,12 @@ export function setupEventListeners() {
             // Auto-fit after image load completes
             setTimeout(() => {
                 fitImageToWindow();
-                // Consider viewerScale for SBS modes
-                const effectiveScale = isSBSMode(state.params.mode)
-                    ? state.params.scale * state.viewerScale
-                    : state.params.scale;
-                updateViewerZoomDisplay(effectiveScale);
+                // Read the scale the same way the renderer's own post-fit event does:
+                // a 3DTV load (every SBS/TaB display mode in viewer mode) is zoomed by
+                // viewerScale alone, so the SBS formula reported the mesh fit scale
+                // here and overwrote the correct percentage fitImageToWindow() had
+                // just published.
+                updateViewerZoomDisplay(getViewerDisplayScale());
             }, 100);
         } else {
             updateZoomDisplay();
@@ -932,10 +933,7 @@ export function setupEventListeners() {
     // zoom interaction. updateViewerZoomDisplay() self-gates to viewer/3DTV modes,
     // and running after the renderer's refit means state.params.scale is current.
     window.addEventListener('canvas-resized', () => {
-        const effectiveScale = isSBSMode(state.params.mode)
-            ? state.params.scale * state.viewerScale
-            : state.params.scale;
-        updateViewerZoomDisplay(effectiveScale);
+        updateViewerZoomDisplay(getViewerDisplayScale());
     }, { signal });
 
 
