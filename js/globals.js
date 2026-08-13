@@ -346,6 +346,35 @@ export function is3DTVActive() {
     return state.params.sbs3dtv && is3DTVModeApplicable(state.params.mode);
 }
 
+/**
+ * Scale the viewer zoom readout must be computed from.
+ *
+ * Which value actually drives the on-screen size depends on the mode, so the
+ * readout has to follow the one in effect:
+ * - 3DTV active: the mesh always covers the screen and state.params.scale stops
+ *   affecting the rendering entirely (updateMeshTransform ignores it there), so
+ *   the zoom comes purely from the shader's per-eye UV scaling — viewerScale.
+ * - Viewer mode on an SBS layout: the mesh scale (state.params.scale) and the
+ *   shader's UV zoom (state.viewerScale) compose, matching the wheel-zoom path.
+ * - Everything else: the mesh scale alone.
+ *
+ * Centralized so the renderer's post-fit event and the UI's post-load /
+ * post-resize refreshes cannot drift apart — the two UI call sites used the SBS
+ * formula in 3DTV mode as well, reporting the mesh fit scale (e.g. 67%) instead
+ * of the 100% the image is actually displayed at right after a 3DTV load.
+ *
+ * @returns {number} Scale to pass to updateViewerZoomDisplay()
+ */
+export function getViewerDisplayScale() {
+    if (is3DTVActive()) {
+        return state.viewerScale;
+    }
+    if (isSBSMode(state.params.mode)) {
+        return state.params.scale * state.viewerScale;
+    }
+    return state.params.scale;
+}
+
 export const CONSTANTS = {
     // Mode-specific filename suffixes (from mode-utils.js)
     modeSuffixes: modeSuffixes,
