@@ -347,6 +347,76 @@ body.menu-open .panel-tab {
   pointer-events: auto;
 }
 
+/* ===== Distraction-free view (normal/editable mode) ===== */
+/* One class on <body> hides every operation panel and drawer handle at once.
+   Nothing else is touched, so removing the class restores each panel to exactly
+   the state the user left it in. Viewer mode is excluded: it has its own bar. */
+body.ui-chrome-hidden:not(.viewer-mode) #ui-container,
+body.ui-chrome-hidden:not(.viewer-mode) #status-panel,
+body.ui-chrome-hidden:not(.viewer-mode) #histogram-panel,
+body.ui-chrome-hidden:not(.viewer-mode) .panel-tab,
+body.ui-chrome-hidden:not(.viewer-mode) .drawer-handle,
+body.ui-chrome-hidden:not(.viewer-mode) .status-toggle-btn {
+  display: none !important;
+}
+
+/* Toggle button: sits inside #canvas-container so it always tracks the visible
+   image area without needing per-breakpoint offsets for the menu width. */
+#uiVisibilityToggleBtn {
+  position: absolute;
+  left: var(--spacing-md);
+  bottom: var(--spacing-md);
+  z-index: var(--z-drawer);
+  /* Revealed by .is-available once an image is loaded (see ui-visibility.js) */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--transition-fast) ease,
+              background var(--transition-fast) ease,
+              transform var(--transition-fast) ease;
+}
+
+#uiVisibilityToggleBtn.is-available {
+  display: flex;
+}
+
+#uiVisibilityToggleBtn:hover,
+#uiVisibilityToggleBtn:focus-visible {
+  opacity: 1;
+  background: var(--bg-hover);
+  transform: scale(1.08);
+}
+
+/* While the panels are hidden this button is the only pointer route back, so it
+   stays clickable — just faint enough not to compete with the image. */
+body.ui-chrome-hidden #uiVisibilityToggleBtn {
+  opacity: 0.3;
+}
+
+body.ui-chrome-hidden #uiVisibilityToggleBtn:hover,
+body.ui-chrome-hidden #uiVisibilityToggleBtn:focus-visible {
+  opacity: 1;
+}
+
+/* Viewer mode has its own auto-hiding control bar */
+body.viewer-mode #uiVisibilityToggleBtn {
+  display: none !important;
+}
+
 /* ===== Menu Panels (Slide System) ===== */
 .menu-panels {
   position: relative;

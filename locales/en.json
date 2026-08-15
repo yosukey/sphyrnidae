@@ -296,6 +296,9 @@
     "shiftArrow": "Shift + Arrow",
     "shiftArrowDesc": "Alignment adjustment (10px)",
     "arrowNote": "* Arrow keys are dedicated to alignment",
+    "hidePanelsKey": "H",
+    "hidePanelsDesc": "Show/hide all operation panels",
+    "hidePanelsNote": "* Editing mode only; the button at the bottom-left of the image area does the same",
     "rectangularCrop": "Rectangular Crop",
     "cropSelectionDesc": "Select area (in selection mode)",
     "rightDrag": "Right Drag",
@@ -502,6 +505,8 @@
   },
   "accessibility": {
     "skipToContent": "Skip to content",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "hidePanels": "Hide all panels (H)",
+    "showPanels": "Show panels again (H)"
   }
 }

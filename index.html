@@ -1014,7 +1014,12 @@
                             <div class="help-key" data-i18n="help.shiftArrow">Shift + Arrow</div>
                             <div class="help-desc" data-i18n="help.shiftArrowDesc">Alignment adjustment (10px)</div>
                         </div>
+                        <div class="help-item">
+                            <div class="help-key" data-i18n="help.hidePanelsKey">H</div>
+                            <div class="help-desc" data-i18n="help.hidePanelsDesc">Show/hide all operation panels</div>
+                        </div>
                         <div class="help-note" data-i18n="help.arrowNote">Note: arrow keys are always reserved for alignment</div>
+                        <div class="help-note" data-i18n="help.hidePanelsNote">Note: editing mode only; the button at the bottom-left of the image area does the same</div>
                     </div>
 
                     <h3 class="help-heading" data-i18n="help.rectangularCrop">Rectangular crop</h3>
@@ -1120,6 +1125,15 @@
              (auto-levels failure). Hidden by default; those handlers toggle display
              and inject the retry button. -->
         <div id="renderStatus" role="status" aria-live="polite" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 80%; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); color: #fff; border-radius: 8px; text-align: center; font-size: 14px;"></div>
+        <!-- Distraction-free view toggle (normal editing mode; the H key does the same).
+             Hidden until the first image loads; ui-visibility.js keeps the label,
+             tooltip and data-i18n keys in sync with the current state. -->
+        <button id="uiVisibilityToggleBtn" type="button" aria-pressed="false"
+                data-i18n="[aria-label]accessibility.hidePanels"
+                data-i18n-title="accessibility.hidePanels"
+                aria-label="Hide panels (H)" title="Hide panels (H)">
+            <span class="ui-visibility-icon" aria-hidden="true">🖼️</span>
+        </button>
     </div>
     </div><!-- /app-layout -->
 

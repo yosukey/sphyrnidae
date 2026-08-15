@@ -16,6 +16,7 @@ import { cancelPendingUrlDialogLoad } from './ui-file-loading.js';
 import { togglePointer3dMode, updatePointer3dDepthDisplay } from './ui-pointer3d.js';
 import { applySwapLR } from './ui-alignment.js';
 import { isFullscreenActive, exitFullscreenCompat } from './ui-fullscreen.js';
+import { toggleUiChrome } from './ui-visibility.js';
 import * as logger from '../utils/logger.js';
 
 // Callback functions (set from ui.js)
@@ -992,6 +993,19 @@ export function setupKeyboardHandler(signal) {
             if (e.target && e.target.tagName === 'SELECT') return;
             if (e.target && e.target.tagName === 'TEXTAREA') return;
             if (e.target && e.target.isContentEditable) return;
+        }
+
+        // H: toggle the distraction-free view (hide/restore every operation panel).
+        // Normal editing mode only — viewer mode already has an auto-hiding control
+        // bar, so the key is left inert there rather than fighting it. Escape is
+        // deliberately not used: it is reserved for leaving fullscreen.
+        if (e.key === 'h' || e.key === 'H') {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (!state.viewerMode) {
+                toggleUiChrome();
+                e.preventDefault();
+            }
+            return;
         }
 
         let changed = false;

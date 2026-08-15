@@ -112,6 +112,7 @@ const PRECACHE_URLS = [
   './js/ui/ui-toast.js',
   './js/ui/ui-update-notification.js',
   './js/ui/ui-viewer.js',
+  './js/ui/ui-visibility.js',
   './js/ui/ui-zoom.js',
   './js/ui/ui-pointer3d.js',
   // Utils

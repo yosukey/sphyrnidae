@@ -322,6 +322,9 @@ export const state = {
     pointer3dParallax: 0.0,        // Pointer depth: right-eye-only baseUv x-shift (L/R disparity = parallax * eyeWidth px)
     pointer3dVisible: false,        // Whether mouse is currently over the canvas
 
+    // Distraction-free view (normal/editable mode only)
+    uiChromeHidden: false,          // Whether every UI panel/handle is hidden (H key / toggle button)
+
     // Parameters (initialized from defaultParams)
     params: structuredClone(defaultParams),
 
