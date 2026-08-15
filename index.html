@@ -88,7 +88,17 @@
 
     <!-- Top-right status panel -->
     <div id="status-panel">
-        <button id="hideStatusBtn" class="status-close-btn">×</button>
+        <!-- Two separate actions, deliberately: − collapses this panel alone, × clears
+             every panel at once (the same distraction-free view the H key toggles).
+             ui-visibility.js owns both handlers. -->
+        <button id="minimizeStatusBtn" type="button" class="status-close-btn status-minimize-btn"
+                data-i18n="[aria-label]accessibility.minimizeStatus"
+                data-i18n-title="accessibility.minimizeStatus"
+                aria-label="Minimize this panel" title="Minimize this panel">−</button>
+        <button id="hideStatusBtn" type="button" class="status-close-btn"
+                data-i18n="[aria-label]accessibility.hidePanels"
+                data-i18n-title="accessibility.hidePanels"
+                aria-label="Hide all panels (H)" title="Hide all panels (H)">×</button>
         <div class="status-row small">
             <span class="status-label">🔧</span>
             <span class="status-name" data-i18n="status.opencv">OpenCV:</span>
@@ -124,8 +134,15 @@
         </div>
     </div>
 
-    <!-- Status panel reopen button (shown when panel is hidden) -->
-    <button id="showStatusBtn" class="status-toggle-btn">📊</button>
+    <!-- Restore button, shared by two states (ui-visibility.js swaps the glyph and label):
+         while every panel is hidden it brings them all back («), and while only the
+         status panel is minimized it brings that panel back (▤). -->
+    <button id="showStatusBtn" type="button" class="status-toggle-btn"
+            data-i18n="[aria-label]accessibility.showStatus"
+            data-i18n-title="accessibility.showStatus"
+            aria-label="Show the status panel" title="Show the status panel">
+        <span class="status-toggle-icon" aria-hidden="true">▤</span>
+    </button>
 
     <!-- Histogram panel -->
     <!-- Hidden via inline style (not the .hidden class) so the initial state
@@ -1019,7 +1036,7 @@
                             <div class="help-desc" data-i18n="help.hidePanelsDesc">Show/hide all operation panels</div>
                         </div>
                         <div class="help-note" data-i18n="help.arrowNote">Note: arrow keys are always reserved for alignment</div>
-                        <div class="help-note" data-i18n="help.hidePanelsNote">Note: editing mode only; the button at the bottom-left of the image area does the same</div>
+                        <div class="help-note" data-i18n="help.hidePanelsNote">Note: editing mode only; the × on the status panel also hides them, and buttons to bring them back appear at the top-right and bottom-left of the image</div>
                     </div>
 
                     <h3 class="help-heading" data-i18n="help.rectangularCrop">Rectangular crop</h3>
@@ -1125,14 +1142,16 @@
              (auto-levels failure). Hidden by default; those handlers toggle display
              and inject the retry button. -->
         <div id="renderStatus" role="status" aria-live="polite" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 80%; padding: 16px 20px; background: rgba(0, 0, 0, 0.85); color: #fff; border-radius: 8px; text-align: center; font-size: 14px;"></div>
-        <!-- Distraction-free view toggle (normal editing mode; the H key does the same).
-             Hidden until the first image loads; ui-visibility.js keeps the label,
-             tooltip and data-i18n keys in sync with the current state. -->
-        <button id="uiVisibilityToggleBtn" type="button" aria-pressed="false"
-                data-i18n="[aria-label]accessibility.hidePanels"
-                data-i18n-title="accessibility.hidePanels"
-                aria-label="Hide panels (H)" title="Hide panels (H)">
-            <span class="ui-visibility-icon" aria-hidden="true">🖼️</span>
+        <!-- The way back from the distraction-free view, drawn on the image itself.
+             On screen only while the panels are hidden: putting them away is the status
+             panel's × (and the H key), so a hide control here would only duplicate it.
+             Its label never changes, so unlike the top-right restore button it carries
+             its i18n keys statically. -->
+        <button id="uiVisibilityToggleBtn" type="button"
+                data-i18n="[aria-label]accessibility.showPanels"
+                data-i18n-title="accessibility.showPanels"
+                aria-label="Show panels again (H)" title="Show panels again (H)">
+            <span class="ui-visibility-icon" aria-hidden="true">«</span>
         </button>
     </div>
     </div><!-- /app-layout -->
