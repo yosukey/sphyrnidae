@@ -170,34 +170,18 @@ function setupMenuDrawer() {
 }
 
 /**
- * Set up status panel show/hide controls
+ * Set up the status panel's initial state.
+ *
+ * Its three buttons (− minimize, × hide every panel, and the shared restore button)
+ * are wired in ui-visibility.js instead: × drives the distraction-free view and the
+ * restore button covers both that and this panel, so splitting the handlers across two
+ * modules would mean two owners for one set of labels. Only the opening state is set
+ * here, and setupMenuSystem() runs before setupUiVisibilityToggle() (see ui.js), so
+ * the buttons are labelled against a settled state.
  */
 function setupStatusPanel() {
-    const signal = menuEventAbortController?.signal;
-    if (!signal) return;
-
-    const statusPanel = document.getElementById('status-panel');
-    const showStatusBtn = document.getElementById('showStatusBtn');
-    const hideStatusBtn = document.getElementById('hideStatusBtn');
-
     // Initial state: status panel is visible
     document.body.classList.add('status-open');
-
-    if (hideStatusBtn) {
-        hideStatusBtn.addEventListener('click', () => {
-            if (statusPanel) statusPanel.classList.add('status-hidden');
-            document.body.classList.remove('status-open');
-            clearElementCache();
-        }, { signal });
-    }
-
-    if (showStatusBtn) {
-        showStatusBtn.addEventListener('click', () => {
-            if (statusPanel) statusPanel.classList.remove('status-hidden');
-            document.body.classList.add('status-open');
-            clearElementCache();
-        }, { signal });
-    }
 }
 
 /**
