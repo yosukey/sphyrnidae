@@ -132,102 +132,130 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install minification tools
+      - name: Install comment-stripping tools
         # Exact versions and disabled lifecycle scripts make release output
         # reproducible and prevent an install hook from mutating the deploy tree.
         run: npm install --no-save --ignore-scripts terser@5.39.0 csso-cli@4.0.2 html-minifier-terser@7.2.0
 
-      - name: Minify JavaScript files
+      - name: Strip comments from JavaScript files
         run: |
-          echo "=== Minifying JS files ==="
+          echo "=== Stripping JS comments ==="
           TOTAL_BEFORE=0
           TOTAL_AFTER=0
 
-          # --compress only (no --mangle): removes comments, whitespace, dead code,
-          # and folds constants. Variable renaming is intentionally omitted because
-          # this project mixes classic scripts and ES modules — mangle causes
-          # identifier collisions (importScripts global scope, window.t vs function t).
-          # The additional gzip saving from mangle is only ~4.7 KB across all files.
+          # Comments and JSDoc only — no --compress, no --mangle. The source of this
+          # project is heavily commented, so stripping comments alone already halves
+          # the JS payload (~324 KB -> ~160 KB gzipped); --compress added only ~22 KB
+          # more while rewriting the code, which is not worth these two costs:
+          #
+          #  1. Rewritten code breaks source-reading tests. Several committed tests
+          #     assert on module source text, and "Verify release artifact" below runs
+          #     them AFTER this step. --compress turns `= true` into `= !0` and single
+          #     into double quotes, so a test that passes locally fails the release.
+          #  2. The deployed app stays debuggable. This is an open-source app served
+          #     as raw ES modules; readable production sources let anyone inspect what
+          #     actually shipped, and stack traces keep their original line structure.
+          #
+          # --format flags: comments=false strips every comment including JSDoc;
+          # beautify=true keeps the statement-per-line structure rather than emitting
+          # one long line; quote_style=3 preserves the quote characters from the
+          # source. Identifiers, literals and control flow are left exactly as written.
+          # Terser is still the tool (not a hand-rolled regex stripper) because it
+          # removes comments via a real parse, so a `//` inside a string or regex
+          # literal can never be mistaken for one.
+          TERSER_FORMAT='comments=false,beautify=true,quote_style=3'
+
           for file in $(find js -name '*.js' -type f); do
             SIZE_BEFORE=$(stat -c%s "$file")
             TOTAL_BEFORE=$((TOTAL_BEFORE + SIZE_BEFORE))
-            npx terser "$file" --compress --output "$file"
+            npx terser "$file" --format "$TERSER_FORMAT" --output "$file"
             SIZE_AFTER=$(stat -c%s "$file")
             TOTAL_AFTER=$((TOTAL_AFTER + SIZE_AFTER))
             echo "  $file: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
           done
 
-          # Minify sw.js
+          # sw.js
           SIZE_BEFORE=$(stat -c%s sw.js)
           TOTAL_BEFORE=$((TOTAL_BEFORE + SIZE_BEFORE))
-          npx terser sw.js --compress --output sw.js
+          npx terser sw.js --format "$TERSER_FORMAT" --output sw.js
           SIZE_AFTER=$(stat -c%s sw.js)
           TOTAL_AFTER=$((TOTAL_AFTER + SIZE_AFTER))
           echo "  sw.js: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
 
-          # Minify debug-config.js
+          # debug-config.js
           SIZE_BEFORE=$(stat -c%s debug-config.js)
           TOTAL_BEFORE=$((TOTAL_BEFORE + SIZE_BEFORE))
-          npx terser debug-config.js --compress --output debug-config.js
+          npx terser debug-config.js --format "$TERSER_FORMAT" --output debug-config.js
           SIZE_AFTER=$(stat -c%s debug-config.js)
           TOTAL_AFTER=$((TOTAL_AFTER + SIZE_AFTER))
           echo "  debug-config.js: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
 
-          # Minify version-config.js
+          # version-config.js
           SIZE_BEFORE=$(stat -c%s version-config.js)
           TOTAL_BEFORE=$((TOTAL_BEFORE + SIZE_BEFORE))
-          npx terser version-config.js --compress --output version-config.js
+          npx terser version-config.js --format "$TERSER_FORMAT" --output version-config.js
           SIZE_AFTER=$(stat -c%s version-config.js)
           TOTAL_AFTER=$((TOTAL_AFTER + SIZE_AFTER))
           echo "  version-config.js: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
 
           SAVED=$((TOTAL_BEFORE - TOTAL_AFTER))
           echo ""
-          echo "✓ JS minification complete: ${TOTAL_BEFORE}B → ${TOTAL_AFTER}B (saved ${SAVED}B)"
+          echo "✓ JS comment strip complete: ${TOTAL_BEFORE}B → ${TOTAL_AFTER}B (saved ${SAVED}B)"
 
-      - name: Minify CSS
+      - name: Strip comments from CSS
         run: |
-          echo "=== Minifying CSS ==="
+          echo "=== Stripping CSS comments ==="
           TOTAL_BEFORE=0
           TOTAL_AFTER=0
 
+          # --comments none drops every /* */ block; --no-restructure turns off csso's
+          # structural pass, which otherwise merges and alphabetically reorders selector
+          # lists. That pass is cascade-safe but it rewrites the stylesheet's shape, and
+          # the shape is what committed tests read: tests/ui-visibility-toggle.test.mjs
+          # extracts the ui-chrome-hidden selector list to check which panels it covers.
+          # csso has no comments-only mode, so whitespace and value normalization
+          # (0.55 -> .55) still happen; neither is observable by a consumer of the CSS.
           for file in css/base.css css/layout.css css/controls.css css/viewer.css css/dialogs.css css/utilities.css; do
             SIZE_BEFORE=$(stat -c%s "$file")
             TOTAL_BEFORE=$((TOTAL_BEFORE + SIZE_BEFORE))
-            npx csso "$file" --output "$file"
+            npx csso "$file" --comments none --no-restructure --output "$file"
             SIZE_AFTER=$(stat -c%s "$file")
             TOTAL_AFTER=$((TOTAL_AFTER + SIZE_AFTER))
             echo "✓ $file: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
           done
 
           SAVED=$((TOTAL_BEFORE - TOTAL_AFTER))
-          echo "✓ CSS minification complete: ${TOTAL_BEFORE}B → ${TOTAL_AFTER}B (saved ${SAVED}B)"
+          echo "✓ CSS comment strip complete: ${TOTAL_BEFORE}B → ${TOTAL_AFTER}B (saved ${SAVED}B)"
 
-      - name: Minify HTML
+      - name: Strip comments from HTML
         run: |
-          echo "=== Minifying HTML ==="
+          echo "=== Stripping HTML comments ==="
           SIZE_BEFORE=$(stat -c%s index.html)
+          # --remove-comments only. --collapse-whitespace is deliberately NOT used: it
+          # leaves no newlines or indentation, which breaks tests that locate markup by
+          # structure, and it is worth far less than the comment removal here. The
+          # attribute and nested CSS/JS options are off for the same reason — the point
+          # of this step is to drop the documentation, not to rewrite the document.
+          # The inline import map must survive byte-identical: its CSP sha256 is
+          # hard-coded in index.html and _headers and re-checked below.
           npx html-minifier-terser index.html \
-            --collapse-whitespace \
             --remove-comments \
-            --remove-redundant-attributes \
-            --remove-empty-attributes \
-            --minify-css true \
-            --minify-js true \
             -o index.html
           SIZE_AFTER=$(stat -c%s index.html)
           echo "✓ index.html: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
 
-      - name: Minify JSON locale files
+      - name: Compact JSON locale files
         run: |
-          echo "=== Minifying JSON ==="
+          # JSON carries no comments, so this stays pure whitespace compaction; it is
+          # unobservable to JSON.parse and therefore safe under the comments-only rule.
+          echo "=== Compacting JSON ==="
           for file in locales/*.json; do
             SIZE_BEFORE=$(stat -c%s "$file")
             jq -c '.' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
             SIZE_AFTER=$(stat -c%s "$file")
             echo "  $file: ${SIZE_BEFORE}B → ${SIZE_AFTER}B"
           done
-          echo "✓ JSON minification complete"
+          echo "✓ JSON compaction complete"
 
       - name: Verify release artifact
         run: |
@@ -240,9 +268,9 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const sw = fs.readFileSync('sw.js', 'utf8');
-          // This runs AFTER terser minification, which rewrites string literals
-          // to double quotes — match both quote styles or the list is empty and
-          // the check passes vacuously.
+          // The comment-strip step preserves the source quote style, but match both
+          // quote characters anyway so this never silently degrades to an empty list
+          // (which would make the check pass vacuously) if that step ever changes.
           const urls = [...sw.matchAll(/["']\.\/([^"']+)["']/g)].map(([, path]) => path);
           if (urls.length === 0) {
             throw new Error('No precache paths extracted from sw.js — extraction regex is broken');
@@ -286,19 +314,20 @@ jobs:
           }
           const html = fs.readFileSync('index.html', 'utf8');
           // The inline import map is allowed by CSP via a script-src sha256 of its
-          // exact text. Recompute that hash from the (post-minification) import-map
-          // element and assert it is present in script-src, rather than hard-coding
-          // it: this can never drift out of sync when the import map changes, and it
-          // fails loudly if minification ever alters the import-map text (which would
-          // otherwise ship a CSP hash the browser rejects, breaking module loading).
+          // exact text. Recompute that hash from the import-map element as it stands
+          // in the built tree and assert it is present in script-src, rather than
+          // hard-coding it: this can never drift out of sync when the import map
+          // changes, and it fails loudly if a build step ever alters the import-map
+          // text (which would otherwise ship a CSP hash the browser rejects, breaking
+          // module loading).
           const crypto = require('crypto');
           const importmap = html.match(/<script type="importmap">([\s\S]*?)<\/script>/);
           if (!importmap) {
-            throw new Error('Import-map <script> not found in minified index.html');
+            throw new Error('Import-map <script> not found in the built index.html');
           }
           const importmapHash = 'sha256-' + crypto.createHash('sha256').update(importmap[1]).digest('base64');
           if (!html.includes(importmapHash)) {
-            throw new Error(`Import-map CSP hash ${importmapHash} is missing from minified index.html script-src`);
+            throw new Error(`Import-map CSP hash ${importmapHash} is missing from the built index.html script-src`);
           }
           // The header CSP in _headers hard-codes the same import-map hash and applies
           // simultaneously with the <meta> CSP in production (Cloudflare Pages): the
@@ -318,7 +347,7 @@ jobs:
           // un-precached and pass CI silently, breaking offline boot for that asset.
           // Only refs that resolve to a real file yet are absent from the precache list
           // fail; external URLs, fragments, empty/dynamic hrefs and non-file refs are
-          // skipped. (HTML minification keeps attribute quotes — no --remove-attribute-quotes.)
+          // skipped. (The HTML step only removes comments, so attribute quotes remain.)
           const htmlRefs = [...html.matchAll(/(?:src|href)\s*=\s*["']([^"']+)["']/g)]
             .map(([, ref]) => ref.trim())
             .filter((ref) => ref && !ref.startsWith('#') && !/^[a-z]+:/i.test(ref) && !ref.startsWith('//'))

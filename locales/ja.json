@@ -296,6 +296,9 @@
     "shiftArrow": "Shift + 矢印",
     "shiftArrowDesc": "アライメント調整 (10px)",
     "arrowNote": "※矢印キーは常にアライメント専用です",
+    "hidePanelsKey": "H",
+    "hidePanelsDesc": "操作パネルの表示／非表示を切替",
+    "hidePanelsNote": "※編集モード専用。画像表示エリア左下のボタンでも切替できます",
     "rectangularCrop": "矩形選択クロップ",
     "cropSelectionDesc": "範囲を選択(選択モード時)",
     "rightDrag": "右ドラッグ",
@@ -502,6 +505,8 @@
   },
   "accessibility": {
     "skipToContent": "コンテンツへスキップ",
-    "openMenu": "メニューを開く"
+    "openMenu": "メニューを開く",
+    "hidePanels": "パネルをすべて隠す (H)",
+    "showPanels": "パネルを表示に戻す (H)"
   }
 }

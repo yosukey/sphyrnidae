@@ -13,6 +13,7 @@ import { fetchImageAsFile, sanitizeDisplayUrl } from './loader-utils.js';
 import { showLoadingProgress, hideLoadingProgress } from './loader-ui-progress.js';
 import { updateParamValue } from '../ui/ui-parameters.js';
 import { updateViewerExitButtonVisibility } from '../ui/ui-viewer.js';
+import { resetUiChrome } from '../ui/ui-visibility.js';
 import { rotZoomToAlignTransform, splitVerticalShift } from '../rendering/alignment-geometry.js';
 import * as logger from '../utils/logger.js';
 
@@ -50,6 +51,11 @@ export async function startViewerMode(files, loadViewerImageCallback = null) {
     state.viewerLoopMode = false;
     const viewerLoopBtnEl = document.getElementById('viewerLoopBtn');
     if (viewerLoopBtnEl) viewerLoopBtnEl.classList.remove('active');
+
+    // Drop the normal-mode distraction-free view before the viewer takes over the
+    // UI: the viewer has no control for it, and leaving it armed would keep the
+    // panels suppressed after the viewer restores them.
+    resetUiChrome();
 
     // Switch UI (hide menu)
     const menuPanel = document.getElementById('ui-container');

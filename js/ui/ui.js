@@ -49,6 +49,7 @@ import {
     cleanupCropSelectionListeners
 } from './ui-crop.js';
 import { setupMenuSystem, cleanupMenuSystem } from './ui-menu.js';
+import { setupUiVisibilityToggle, cleanupUiVisibility } from './ui-visibility.js';
 import { setupFullscreenSystem, cleanupFullscreenSystem } from './ui-fullscreen.js';
 import {
     setupViewerModeDialog,
@@ -258,6 +259,7 @@ export function cleanupUI() {
     cleanupCropSelectionListeners();     // Crop selection interactions
     cleanupOfflineDetection();           // Network status detection
     cleanupMenuSystem();                 // Menu system listeners
+    cleanupUiVisibility();               // Distraction-free view state
     cleanupColorAdjustmentControls();    // Color adjustment UI
     cleanupAlignmentControls();          // Alignment controls
     cleanupTextOverlayControls();        // Text overlay UI
@@ -471,6 +473,9 @@ export function setupEventListeners() {
 
     // ===== Initialize menu system =====
     setupMenuSystem();
+
+    // ===== Distraction-free view toggle (hide/restore all panels) =====
+    setupUiVisibilityToggle(signal);
 
     // ===== Fullscreen detection and viewer bar control =====
     setupFullscreenSystem();
