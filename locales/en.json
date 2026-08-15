@@ -298,7 +298,7 @@
     "arrowNote": "* Arrow keys are dedicated to alignment",
     "hidePanelsKey": "H",
     "hidePanelsDesc": "Show/hide all operation panels",
-    "hidePanelsNote": "* Editing mode only; the button at the bottom-left of the image area does the same",
+    "hidePanelsNote": "* Editing mode only; the × on the status panel also hides them, and buttons to bring them back appear at the top-right and bottom-left of the image",
     "rectangularCrop": "Rectangular Crop",
     "cropSelectionDesc": "Select area (in selection mode)",
     "rightDrag": "Right Drag",
@@ -507,6 +507,8 @@
     "skipToContent": "Skip to content",
     "openMenu": "Open menu",
     "hidePanels": "Hide all panels (H)",
-    "showPanels": "Show panels again (H)"
+    "showPanels": "Show panels again (H)",
+    "minimizeStatus": "Minimize this panel",
+    "showStatus": "Show the status panel"
   }
 }

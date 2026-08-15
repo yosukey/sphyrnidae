@@ -94,30 +94,44 @@ body.fullscreen-mode.viewer-fullscreen #status-panel {
   display: none !important;
 }
 
-/* ===== Top-right status panel toggle button ===== */
+/* ===== Top-right restore button =====
+   Shared by two states (see ui-visibility.js): it brings every panel back while the
+   distraction-free view is on, and brings the status panel back while only that panel
+   is minimized. Styled as the same translucent glass chip the rest of the overlay
+   chrome uses rather than a solid accent button — it sits over the image, so it should
+   read as a handle, not as a call to action. */
 .status-toggle-btn {
   position: fixed;
   top: var(--spacing-md);
   right: var(--spacing-md);
   z-index: var(--z-drawer);
-  background: var(--accent-blue);
-  border: 2px solid white;
-  color: white;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--border-radius-lg);
+  width: 36px;
+  height: 36px;
+  padding: 0;
   font-size: 18px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  box-shadow: var(--shadow-heavy);
-  transition: all var(--transition-medium) var(--transition-smooth);
+  opacity: 0.6;
+  transition: opacity var(--transition-fast) ease,
+              background var(--transition-fast) ease,
+              transform var(--transition-fast) ease;
   display: none;
   align-items: center;
   justify-content: center;
 }
 
-.status-toggle-btn:hover {
-  background: var(--accent-blue-hover);
-  transform: scale(1.1);
+.status-toggle-btn:hover,
+.status-toggle-btn:focus-visible {
+  opacity: 1;
+  background: var(--bg-hover);
+  transform: scale(1.08);
 }
 
 body:not(.status-open) .status-toggle-btn {
@@ -156,12 +170,24 @@ body.viewer-mode .status-toggle-btn {
   transform: translateX(120%);
   opacity: 0;
   pointer-events: none;
+  /* Takes the collapsed panel out of the tab order as well. pointer-events alone stops
+     the mouse but leaves the buttons focusable, and reaching the invisible × by Tab now
+     clears every panel — it used to be a no-op on an already-collapsed panel.
+     The delay lets the slide-out play out first. It is declared here rather than on the
+     base rule so it applies in one direction only: removing .status-hidden falls back
+     to the base transition, and the panel becomes visible (and focusable) at once
+     instead of a beat later. */
+  visibility: hidden;
+  transition: transform var(--transition-medium) var(--transition-smooth),
+              opacity var(--transition-medium),
+              visibility 0s linear var(--transition-medium);
 }
 
 body.status-open #status-panel {
   transform: translateX(0);
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 /* Histogram panel */
@@ -192,6 +218,11 @@ body.status-open #status-panel {
 }
 
 .status-close-btn {
+  /* Size and spacing live in custom properties so the second header button below can
+     place itself from them rather than restating the number, and so the touch-target
+     bump further down has one place to change. */
+  --panel-header-btn: 28px;
+  --panel-header-gap: var(--spacing-xs);
   position: absolute;
   top: var(--spacing-sm);
   right: var(--spacing-sm);
@@ -200,13 +231,19 @@ body.status-open #status-panel {
   color: var(--text-primary);
   font-size: 20px;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: var(--panel-header-btn);
+  height: var(--panel-header-btn);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--border-radius-md);
-  transition: all var(--transition-fast);
+  /* Named properties rather than `all`: `all` also picks up the visibility the panel
+     inherits down when it collapses, which left these buttons unfocusable for a beat
+     after the panel came back — long enough for the focus hand-off to find nothing to
+     land on. Only these three ever change. */
+  transition: background var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--transition-fast);
   line-height: 1;
 }
 
@@ -218,6 +255,29 @@ body.status-open #status-panel {
 
 .status-close-btn:active {
   transform: scale(0.95);
+}
+
+/* Status panel only: the second header button, sitting to the left of the ×. Same box
+   as .status-close-btn — only the offset differs, and it is derived so resizing the
+   buttons cannot slide the two on top of each other. The histogram panel keeps a lone
+   × and is unaffected. */
+.status-minimize-btn {
+  right: calc(var(--spacing-sm) + var(--panel-header-btn) + var(--panel-header-gap));
+}
+
+/* A finger is not a mouse pointer, and these two sit side by side with one of them (×)
+   clearing the whole UI — so on touch they get real targets and real separation, and
+   the panel's reserved header strip grows to match. */
+@media (pointer: coarse) {
+  .status-close-btn {
+    --panel-header-btn: 44px;
+    --panel-header-gap: var(--spacing-sm);
+    font-size: 24px;
+  }
+
+  #status-panel {
+    padding-top: calc(var(--spacing-sm) * 2 + 44px);
+  }
 }
 
 .status-row {
@@ -355,61 +415,98 @@ body.ui-chrome-hidden:not(.viewer-mode) #ui-container,
 body.ui-chrome-hidden:not(.viewer-mode) #status-panel,
 body.ui-chrome-hidden:not(.viewer-mode) #histogram-panel,
 body.ui-chrome-hidden:not(.viewer-mode) .panel-tab,
-body.ui-chrome-hidden:not(.viewer-mode) .drawer-handle,
-body.ui-chrome-hidden:not(.viewer-mode) .status-toggle-btn {
+body.ui-chrome-hidden:not(.viewer-mode) .drawer-handle {
   display: none !important;
 }
 
-/* Toggle button: sits inside #canvas-container so it always tracks the visible
-   image area without needing per-breakpoint offsets for the menu width. */
+/* ...except the two restore buttons, which are deliberately left on screen. Nothing
+   else can bring the panels back by pointer, so both are exempt from the rule above
+   and revealed by it instead.
+
+   The top-right one is the prominent route: its normal gate is `body:not(.status-open)`,
+   so it needs an override to appear while the status panel is merely suppressed rather
+   than closed. It overrides `body.fullscreen-mode` too. That rule exists to keep a
+   fullscreen screen clean, and it still does — this only fires while the panels are
+   hidden, which is a state the user asked for and needs a visible way out of. Without
+   it, a faint glyph on the image would be the entire escape route in fullscreen.
+   Viewer mode stays excluded: it has its own control bar.
+
+   NOTE: these rules must stay AFTER the display:none rule above — the CSS assertion in
+   tests/ui-visibility-toggle.test.mjs anchors on the first body.ui-chrome-hidden rule
+   whose block declares `display: none !important`. */
+body.ui-chrome-hidden:not(.viewer-mode) .status-toggle-btn {
+  display: flex !important;
+}
+
+body.ui-chrome-hidden:not(.viewer-mode) #uiVisibilityToggleBtn {
+  display: flex;
+}
+
+/* On-canvas restore button: sits inside #canvas-container so it always tracks the
+   visible image area without needing per-breakpoint offsets for the menu width.
+
+   It is the glyph alone — no plate, no border, no shadow — held together only by a drop
+   shadow that keeps it legible over a light or a dark image, and faint enough not to
+   intrude on a cleared screen. The glass chip materializes on hover/focus. The image is
+   the subject; this is a hint that the way back exists, not a button competing with it.
+   It can afford to be this quiet because it is the second route, never the only one:
+   the top-right button is on screen in the same state and is the one meant to be
+   noticed. */
 #uiVisibilityToggleBtn {
   position: absolute;
   left: var(--spacing-md);
   bottom: var(--spacing-md);
   z-index: var(--z-drawer);
-  /* Revealed by .is-available once an image is loaded (see ui-visibility.js) */
+  /* Revealed only while the panels are hidden, by the rule above */
   display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
   padding: 0;
-  font-size: 16px;
+  /* « is lighter than the emoji this replaced, so it needs the extra size */
+  font-size: 20px;
   line-height: 1;
   color: var(--text-primary);
-  background: var(--bg-secondary);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.7);
   cursor: pointer;
-  opacity: 0.55;
+  opacity: 0.22;
   transition: opacity var(--transition-fast) ease,
               background var(--transition-fast) ease,
+              border-color var(--transition-fast) ease,
               transform var(--transition-fast) ease;
-}
-
-#uiVisibilityToggleBtn.is-available {
-  display: flex;
 }
 
 #uiVisibilityToggleBtn:hover,
 #uiVisibilityToggleBtn:focus-visible {
   opacity: 1;
-  background: var(--bg-hover);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow);
   transform: scale(1.08);
 }
 
-/* While the panels are hidden this button is the only pointer route back, so it
-   stays clickable — just faint enough not to compete with the image. */
-body.ui-chrome-hidden #uiVisibilityToggleBtn {
-  opacity: 0.3;
+/* Without hover there is no way to discover a control that only reveals itself on
+   hover, so touch devices get a higher resting opacity instead. */
+@media (hover: none) {
+  #uiVisibilityToggleBtn {
+    opacity: 0.4;
+  }
 }
 
-body.ui-chrome-hidden #uiVisibilityToggleBtn:hover,
-body.ui-chrome-hidden #uiVisibilityToggleBtn:focus-visible {
-  opacity: 1;
+/* Fingers need a bigger target than a mouse pointer does */
+@media (pointer: coarse) {
+  #uiVisibilityToggleBtn,
+  .status-toggle-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* Viewer mode has its own auto-hiding control bar */
