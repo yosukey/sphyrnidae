@@ -7,6 +7,7 @@ import { showToast } from '../ui/ui-toast.js';
 import * as THREE from 'three';
 import { state, DEBUG } from '../globals.js';
 import { applyVRZoomDelta } from '../ui/ui-input.js';
+import { readVRControllerInput } from './vr-input.js';
 import * as logger from '../utils/logger.js';
 
 let vrButton = null;
@@ -55,6 +56,14 @@ const vrStickState = {
     rightTriggered: false,
     lastHorizontalActionTime: 0
 };
+
+// Edge-trigger state for the controller exit button (see vr-input.js), so
+// holding the button down ends the session once instead of every frame.
+// Initialized/reset to true by resetVRStickState(); see the note there.
+let vrExitButtonHeld = true;
+// Set once the controller has asked for the session to end; cleared when the
+// VR navigation state is reset (session start / session end).
+let vrExitRequested = false;
 
 /**
  * Check VR support and initialize button
@@ -933,32 +942,40 @@ function resetVRStickState() {
     vrStickState.rightTriggered = false;
     vrStickState.lastHorizontalActionTime = 0;
     vrViewScale = 1.0;
+    // Reset the exit-button latches too. vrExitButtonHeld starts as held rather
+    // than released: a button still down when the session starts must be
+    // released and pressed again to count, so a press that leaked in from
+    // outside the session (or one held through a previous session's teardown)
+    // cannot end the new session on its very first frame. The first frame that
+    // reports the button up clears it. Without the vrExitRequested reset the
+    // next session could not be exited by controller at all.
+    vrExitButtonHeld = true;
+    vrExitRequested = false;
 }
 
 /**
- * Resolve analog stick axes from XR gamepad.
- * Some devices expose [0,1], others [2,3], and some expose both.
- * Use the pair with the larger magnitude so active input is not missed.
- * @param {number[]} axes - Gamepad axes
- * @returns {{x:number,y:number}}
+ * End the VR session in response to the controller exit button.
+ *
+ * Runs from the VR render loop, so it must not block: endVRSession() is fired
+ * and awaited only for logging. vrExitRequested keeps a second frame from
+ * requesting the end again while the first request is still in flight (the XR
+ * 'end' event, and with it onSessionEnded(), arrives asynchronously).
  */
-function resolveStickAxes(axes) {
-    if (!axes || axes.length < 2) {
-        return { x: 0, y: 0 };
+function requestVRExitFromController() {
+    if (!vrSession || vrExitRequested || isVRSessionChanging) {
+        return;
     }
+    vrExitRequested = true;
 
-    const x01 = Number(axes[0] ?? 0);
-    const y01 = Number(axes[1] ?? 0);
-    const mag01 = Math.max(Math.abs(x01), Math.abs(y01));
+    logger.debug('VR_LOG', 'VR', 'Controller exit button pressed, ending VR session');
 
-    const x23 = Number(axes[2] ?? 0);
-    const y23 = Number(axes[3] ?? 0);
-    const mag23 = Math.max(Math.abs(x23), Math.abs(y23));
-
-    if (mag23 > mag01) {
-        return { x: x23, y: y23 };
-    }
-    return { x: x01, y: y01 };
+    endVRSession().catch((err) => {
+        logger.error('VR', 'Failed to end VR session from controller button:', err);
+        // endVRSession() already forces onSessionEnded() when end() rejects, so
+        // this only runs if the session somehow survived. Release the latch so a
+        // second press can retry rather than leaving the user stuck in VR.
+        vrExitRequested = false;
+    });
 }
 
 
@@ -977,7 +994,8 @@ function applyVRViewScaleDelta(delta) {
 }
 
 /**
- * Update VR navigation via analog stick input.
+ * Update VR navigation via analog stick input, and end the session when the
+ * controller exit button is pressed.
  */
 export function updateVRNavigation() {
     if (!vrSession || !state.renderer) {
@@ -995,29 +1013,41 @@ export function updateVRNavigation() {
         return;
     }
 
-    let horizontal = 0;
-    let vertical = 0;
+    const xrInput = readVRControllerInput(session.inputSources);
+    let horizontal = xrInput.horizontal;
+    let vertical = xrInput.vertical;
+    let exitPressed = xrInput.exitPressed;
 
-    for (const inputSource of session.inputSources) {
-        const axes = inputSource?.gamepad?.axes;
-        if (!axes || axes.length < 2) continue;
-
-        const { x, y } = resolveStickAxes(axes);
-        if (Math.abs(x) > Math.abs(horizontal)) horizontal = x;
-        if (Math.abs(y) > Math.abs(vertical)) vertical = y;
+    // Fallback for browsers/devices where WebXR inputSources are not populated
+    // reliably. Read once and use it for whichever signal is still missing: the
+    // axes only while both sticks read idle (as before), and the exit button
+    // whenever no XR input source reported it pressed.
+    const sticksIdle = Math.abs(horizontal) <= VR_STICK_DEADZONE && Math.abs(vertical) <= VR_STICK_DEADZONE;
+    if ((sticksIdle || !exitPressed) && navigator.getGamepads) {
+        const fallback = readVRControllerInput(navigator.getGamepads());
+        if (sticksIdle) {
+            if (Math.abs(fallback.horizontal) > Math.abs(horizontal)) horizontal = fallback.horizontal;
+            if (Math.abs(fallback.vertical) > Math.abs(vertical)) vertical = fallback.vertical;
+        }
+        exitPressed = exitPressed || fallback.exitPressed;
     }
 
-    // Fallback for browsers/devices where WebXR inputSources axes are not populated reliably
-    if (Math.abs(horizontal) <= VR_STICK_DEADZONE && Math.abs(vertical) <= VR_STICK_DEADZONE && navigator.getGamepads) {
-        const gamepads = navigator.getGamepads();
-        for (const gamepad of gamepads) {
-            const axes = gamepad?.axes;
-            if (!axes || axes.length < 2) continue;
-
-            const { x, y } = resolveStickAxes(axes);
-            if (Math.abs(x) > Math.abs(horizontal)) horizontal = x;
-            if (Math.abs(y) > Math.abs(vertical)) vertical = y;
+    // Exit on the press edge only, so holding the button issues a single end
+    // request and a press held across the session teardown cannot immediately
+    // re-trigger anything on the next session.
+    if (exitPressed) {
+        if (!vrExitButtonHeld) {
+            vrExitButtonHeld = true;
+            requestVRExitFromController();
         }
+    } else {
+        vrExitButtonHeld = false;
+    }
+
+    // Skip stick handling once the session is on its way out: loading another
+    // image while the VR meshes are being torn down is wasted work.
+    if (vrExitRequested) {
+        return;
     }
 
     if (Math.abs(vertical) > VR_STICK_DEADZONE) {
