@@ -77,6 +77,7 @@ const PRECACHE_URLS = [
   './js/rendering/renderer.js',
   './js/rendering/shaders.js',
   './js/rendering/vr.js',
+  './js/rendering/vr-input.js',
   './js/rendering/alignment.js',
   './js/rendering/alignment-geometry.js',
   // Loaders
