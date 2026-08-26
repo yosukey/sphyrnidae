@@ -8,6 +8,16 @@
 # The <meta> copy is kept as an offline / GitHub-Pages fallback where custom
 # headers are unavailable. If you change one, change the other (the importmap
 # sha256 in script-src is also mirrored in index.html's CSP).
+#
+# One script-src entry is deliberately absent from both copies:
+# https://static.cloudflareinsights.com, the Cloudflare Web Analytics beacon. That
+# beacon <script> is injected into the HTML at the edge when this app is deployed
+# on Cloudflare Pages, so the host is only ever needed there — a committed entry
+# would be a dead allowlist entry for anyone serving this repository elsewhere.
+# The release workflow adds it to BOTH policies at build time and fails the release
+# if it does not land; do not add it here by hand (the injection step rejects a
+# policy that already contains it). See "Allow the Cloudflare Web Analytics beacon
+# in the CSP" in .github/workflows/release-deploy.yml.
 # X-Frame-Options is kept as a fallback for older browsers.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-z/vz5LM6ac+HoewOxgCu7I+V+jiixrTKbcLeyjoQrhg=' https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' blob: data: https://cdn.jsdelivr.net https:; worker-src 'self' blob:; child-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'self';
