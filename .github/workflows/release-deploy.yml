@@ -257,6 +257,89 @@ jobs:
           done
           echo "✓ JSON compaction complete"
 
+      - name: Allow the Cloudflare Web Analytics beacon in the CSP
+        run: |
+          # Cloudflare Web Analytics injects its beacon <script> into the HTML response
+          # at the edge (a Pages project setting), so the tag itself is never committed
+          # here and needs no build step. What the edge CANNOT do is amend this app's
+          # CSP, and the injected tag is still subject to it: without the beacon host in
+          # script-src the browser refuses the load (script-src-elem) and not a single
+          # pageview is ever recorded.
+          #
+          # The host is injected here rather than committed because it is specific to
+          # deploying THIS app on Cloudflare Pages, which is exactly what this workflow
+          # does. Anyone serving the repository from somewhere else gets no edge
+          # injection, so a committed entry would be a permanently dead allowlist entry
+          # in their script-src — a small but real widening of a policy that is
+          # otherwise strictly pinned.
+          #
+          # BOTH policies are amended. The header CSP and the <meta> CSP apply
+          # simultaneously in production and browsers evaluate them with AND, so a host
+          # allowed in only one is still blocked. Amending both also preserves the
+          # "these two CSPs stay in sync" invariant (see _headers) at both ends: absent
+          # from both in the committed source, present in both in the built artifact.
+          #
+          # The beacon POSTs to https://cloudflareinsights.com/cdn-cgi/rum, which the
+          # broad `https:` already in connect-src covers; naming that host would be a
+          # no-op today, so it is left out. Add it if connect-src is ever narrowed to an
+          # explicit host list.
+          node <<'NODE'
+          const fs = require('fs');
+          const BEACON_HOST = 'https://static.cloudflareinsights.com';
+
+          // Operate on the script-src directive as a parsed token list rather than
+          // blind-replacing a substring of the policy: an anchor chosen from today's
+          // source (say the last CDN URL) would silently stop matching the day that URL
+          // changes, and a silent miss here reproduces exactly the bug this step exists
+          // to prevent — analytics recording nothing, with no trace in the repository.
+          const addBeaconHost = (policy, where) => {
+            const directives = policy.split(';');
+            const index = directives.findIndex(
+              (directive) => directive.trim().split(/\s+/)[0] === 'script-src'
+            );
+            if (index === -1) {
+              throw new Error(`No script-src directive in the CSP in ${where}`);
+            }
+            if (directives[index].includes(BEACON_HOST)) {
+              throw new Error(
+                `${BEACON_HOST} is already present in ${where}. It is injected at ` +
+                'release time by design and must not be committed — see the comment ' +
+                'on this workflow step.'
+              );
+            }
+            directives[index] = directives[index].replace(/\s*$/, ` ${BEACON_HOST}`);
+            return directives.join(';');
+          };
+
+          // Each pattern must match exactly once. Zero matches means the policy moved
+          // or was reformatted and this step would otherwise no-op; more than one means
+          // the file grew a second policy whose intent this step cannot assume.
+          const inject = (file, pattern, where) => {
+            const original = fs.readFileSync(file, 'utf8');
+            const matches = [...original.matchAll(pattern)];
+            if (matches.length !== 1) {
+              throw new Error(
+                `Expected exactly 1 ${where} in ${file}, found ${matches.length}`
+              );
+            }
+            const [full, prefix, policy, suffix] = matches[0];
+            const replacement = prefix + addBeaconHost(policy, where) + suffix;
+            fs.writeFileSync(file, original.replace(full, () => replacement));
+            console.log(`✓ ${file}: beacon host added to script-src`);
+          };
+
+          inject(
+            'index.html',
+            /(<meta http-equiv="Content-Security-Policy" content=")([\s\S]*?)(">)/g,
+            '<meta> CSP'
+          );
+          inject(
+            '_headers',
+            /^([ \t]+Content-Security-Policy: )(.*)$/gm,
+            'Content-Security-Policy header'
+          );
+          NODE
+
       - name: Verify release artifact
         run: |
           # Glob rather than an explicit list, so a newly added test file cannot
@@ -338,6 +421,30 @@ jobs:
           const headersFile = fs.readFileSync('_headers', 'utf8');
           if (!headersFile.includes(importmapHash)) {
             throw new Error(`Import-map CSP hash ${importmapHash} is missing from _headers (its header CSP also applies in production and would reject the import map)`);
+          }
+          // The Cloudflare Web Analytics beacon host is added to both policies by the
+          // injection step above. Assert it landed, on the built artifact, in BOTH:
+          // that step is the only thing standing between this release and silently
+          // recording zero pageviews, and its failure mode is invisible from the
+          // repository (the beacon <script> is injected at the edge, so nothing here
+          // ever mentions it). Re-derive script-src from each policy rather than
+          // substring-matching the whole file, so the host cannot satisfy this check
+          // from some unrelated position.
+          const BEACON_HOST = 'https://static.cloudflareinsights.com';
+          const scriptSrcOf = (policy) =>
+            policy.split(';').find((directive) => directive.trim().split(/\s+/)[0] === 'script-src');
+          const metaCsp = html.match(/<meta http-equiv="Content-Security-Policy" content="([\s\S]*?)">/);
+          if (!metaCsp) {
+            throw new Error('<meta> CSP not found in the built index.html');
+          }
+          const headerCsp = headersFile.match(/^[ \t]+Content-Security-Policy: (.*)$/m);
+          if (!headerCsp) {
+            throw new Error('Content-Security-Policy header not found in the built _headers');
+          }
+          for (const [where, policy] of [['index.html <meta> CSP', metaCsp[1]], ['_headers header CSP', headerCsp[1]]]) {
+            if (!(scriptSrcOf(policy) || '').includes(BEACON_HOST)) {
+              throw new Error(`${BEACON_HOST} is missing from script-src in the built ${where} — the Cloudflare Web Analytics beacon would be blocked and this release would record no pageviews`);
+            }
           }
           // Forward check from index.html: every same-origin asset it references via a
           // quoted src=/href= must be precached. The inverse walk above intentionally
