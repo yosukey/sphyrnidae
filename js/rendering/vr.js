@@ -33,6 +33,17 @@ let savedMeshScale = null;
 // VR support state
 let vrSupported = false;
 
+// Whether the app currently wants the VR button on screen (i.e. a viewer session
+// is running). Recorded separately from the button itself because the WebXR
+// support check is asynchronous: ?src= starts external viewer mode during page
+// init and calls showVRButton() while navigator.xr.isSessionSupported() is still
+// pending, so at that moment there is no button to show and no vrSupported flag
+// yet. createVRButton() replays this request once the button exists, which is
+// what makes the VR button appear for a ?src= link on a headset (the ?list=
+// viewer path never hit this because the user opens it long after the check
+// resolves).
+let vrButtonVisibilityRequested = false;
+
 // VR session change flag (prevent rapid clicks)
 let isVRSessionChanging = false;
 
@@ -124,6 +135,15 @@ function createVRButton() {
     // Record VR support state (used to control display in viewer mode)
     vrSupported = true;
 
+    // A viewer session that started before this async support check finished
+    // already asked for the button; honour that request now instead of waiting
+    // for another showVRButton() call that will never come.
+    if (vrButtonVisibilityRequested) {
+        logger.debug('VR_LOG', 'VR','Viewer mode started before the VR support check resolved; showing the VR button now');
+        showVRButton();
+        return;
+    }
+
     // Keep hidden by default (show only in viewer mode)
     logger.debug('VR_LOG', 'VR','Initialized VR button (waiting for viewer mode)');
 }
@@ -132,6 +152,7 @@ function createVRButton() {
  * Show VR button (called when viewer mode starts)
  */
 export function showVRButton() {
+    vrButtonVisibilityRequested = true;
     if (vrButton && vrSupported) {
         vrButton.style.display = 'flex';
         if (!vrSession) {
@@ -148,6 +169,9 @@ export function showVRButton() {
  * Hide VR button (called when viewer mode ends)
  */
 export function hideVRButton() {
+    // Clear the pending request too, so a viewer session that ended before the
+    // support check resolved does not pop the button up afterwards.
+    vrButtonVisibilityRequested = false;
     if (vrButton) {
         vrButton.style.display = 'none';
         logger.debug('VR_LOG', 'VR','VR button hidden');

@@ -5,7 +5,7 @@
  */
 
 import { state, DEBUG } from '../globals.js';
-import { showVRButton } from '../rendering/vr.js';
+import { showVRButton, hideVRButton } from '../rendering/vr.js';
 import { onWindowResize } from '../rendering/renderer.js';
 import { fetchImageAsFile, sanitizeDisplayUrl, isCorsOrNetworkError } from './loader-utils.js';
 import { showLoadingProgress, hideLoadingProgress } from './loader-ui-progress.js';
@@ -189,6 +189,13 @@ export async function startExternalImageMode(imageUrl, mode, format, shiftXPx, s
     }
 
     const restoreExternalModeUI = () => {
+        // Take back the VR button request made above. The button is shown for the
+        // viewer session this load was starting; with the load abandoned there is
+        // no viewer session, and on a headset the button would otherwise linger
+        // over the restored normal-mode UI (or pop up later, once the async WebXR
+        // support check resolves).
+        hideVRButton();
+
         // Restore hidden UI components
         restorePrevDisplay(menuPanel);
         restorePrevDisplay(viewerBar);
