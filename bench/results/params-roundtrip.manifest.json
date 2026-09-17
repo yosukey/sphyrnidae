@@ -1,0 +1,96 @@
+{
+  "bench": "params-roundtrip",
+  "generated_at": "2026-09-17T22:42:44.302Z",
+  "commit": "962f449bc850851f4f656f3f16e876c69c53bca5",
+  "working_tree_dirty": true,
+  "source_digest": "83608ddcbf35d7cd3371cdc7a2a4d345f75ba3cdf89c8f56bd9c30d2c8beabc0",
+  "source_files": 80,
+  "source_roots": [
+    "bench",
+    "js",
+    "sw.js"
+  ],
+  "environment": {
+    "node_version": "v22.22.2",
+    "v8_version": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "os_name": "Linux",
+    "os_release": "6.18.44-fc-v33",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_count": 4,
+    "total_memory_bytes": 16877793280
+  },
+  "parameters": {
+    "seed": 20240917,
+    "requested_samples": 200000,
+    "states_per_cell": 12500,
+    "crop_invariant_samples": 100000,
+    "image_widths": [
+      640,
+      1920,
+      4096,
+      8192
+    ],
+    "image_aspect": "16:9",
+    "link_formats": [
+      "viewer",
+      "list"
+    ],
+    "populations": [
+      "in-range",
+      "clamping"
+    ],
+    "base_url": "https://sphyrnidae.pages.dev",
+    "align_export_eps": 0.0001,
+    "max_shift_px": 500,
+    "max_rotation_deg": 15,
+    "max_zoom_pct": 15,
+    "max_crop_ratio": 0.98,
+    "max_shift_uv": 0.1,
+    "mode_count": 16,
+    "tables": [
+      {
+        "file": "params-roundtrip.csv",
+        "columns": [
+          "link_format",
+          "population",
+          "parameter",
+          "image_width",
+          "image_height",
+          "samples",
+          "clamped_samples",
+          "error_median",
+          "error_p99",
+          "error_max",
+          "analytical_bound",
+          "within_bound"
+        ],
+        "row_count": 128
+      },
+      {
+        "file": "params-roundtrip-invariants.csv",
+        "columns": [
+          "invariant",
+          "samples",
+          "violations",
+          "observations",
+          "max_deviation"
+        ],
+        "row_count": 6
+      },
+      {
+        "file": "params-roundtrip-fuzz.csv",
+        "columns": [
+          "parser",
+          "inputs",
+          "exceptions",
+          "rejected_null",
+          "accepted",
+          "contract_violations"
+        ],
+        "row_count": 6
+      }
+    ]
+  }
+}

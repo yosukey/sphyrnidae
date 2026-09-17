@@ -1,0 +1,7 @@
+invariant,samples,violations,observations,max_deviation
+vertical_sampling_constant_preserved,200000,,shiftY re-split differently in 41864 states,6.944312039478
+mode_round_trips,200000,0,,
+format_round_trips,200000,0,,
+auto_crop_window_samples_inside_source,100000,0,0 transforms admit no window,4.441e-16
+crop_window_clamped_in_range,100000,0,,
+crop_window_clamp_idempotent,100000,0,,
