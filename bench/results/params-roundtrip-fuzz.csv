@@ -1,0 +1,7 @@
+parser,inputs,exceptions,rejected_null,accepted,contract_violations
+parseShiftParam,20056,0,20046,10,0
+parseRotationParam,20056,0,20045,11,0
+parseZoomParam,20056,0,20045,11,0
+parseCropParam,20056,0,20056,0,0
+parseFormatParam,20056,0,20054,2,0
+parseModeParam,20056,0,20055,1,0

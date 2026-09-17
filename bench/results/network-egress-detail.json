@@ -1,0 +1,3363 @@
+[
+  {
+    "engine": "chromium",
+    "scenario": "local-file",
+    "steps": [
+      {
+        "step": "open-application",
+        "completed": true,
+        "ms": 946,
+        "note": ""
+      },
+      {
+        "step": "wait-for-opencv",
+        "completed": true,
+        "ms": 13,
+        "note": ""
+      },
+      {
+        "step": "open-local-stereo-image",
+        "completed": true,
+        "ms": 155,
+        "note": ""
+      },
+      {
+        "step": "auto-align",
+        "completed": true,
+        "ms": 3649,
+        "note": ""
+      },
+      {
+        "step": "change-display-mode",
+        "completed": true,
+        "ms": 1388,
+        "note": ""
+      },
+      {
+        "step": "open-export-panel",
+        "completed": true,
+        "ms": 3380,
+        "note": ""
+      },
+      {
+        "step": "export-image",
+        "completed": true,
+        "ms": 7437,
+        "note": ""
+      },
+      {
+        "step": "settle",
+        "completed": true,
+        "ms": 3001,
+        "note": ""
+      }
+    ],
+    "storage": {
+      "cache_names": [
+        "sphyrnidae-static-0.0.0-dev-nosha-dev",
+        "sphyrnidae-runtime-0.0.0-dev-nosha-dev"
+      ],
+      "cache_entries": 91,
+      "cache_bytes": 28335561,
+      "cache_entries_with_marker": [],
+      "cache_entries_unreadable": 0,
+      "local_storage_keys": [],
+      "session_storage_keys": [],
+      "web_storage_with_marker": false,
+      "indexeddb_databases": []
+    },
+    "console_errors": [],
+    "requests": [
+      {
+        "url": "http://127.0.0.1:34347/index.html",
+        "method": "GET",
+        "resource_type": "document",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/base.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/layout.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/controls.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/viewer.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/dialogs.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/utilities.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/wasm-feature-detect.umd.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/loader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/opencv-init.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/early-viewer-mode.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-192x192.png",
+        "method": "GET",
+        "resource_type": "image",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/debug-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/i18n.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/main.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/sw-register.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/safe-storage.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/renderer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-fullscreen.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-viewer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-exif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-crop.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-export.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-worker.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/url-params.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/versionCheck.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-update-notification.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/offlineDetection.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-toast.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/portrait-guard.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/shaders.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/pixel-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-geometry.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-histogram.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-menu.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-visibility.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-pointer3d.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-input.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-mode.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-parameters.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-zoom.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-text-overlay.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-alignment.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjustments.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-file-loading.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr-input.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-exif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/export-params.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-state.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-format-detection.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-processing.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-mpo.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-creation.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-viewer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-external.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-ui-progress.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-pixel-validation.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/simd/opencv.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/ja.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/en.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram-math.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjust-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-shift.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/sw.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "other",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/index.html",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/base.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/layout.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/controls.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/viewer.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/dialogs.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/utilities.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/manifest.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/favicon.ico",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-192x192.png",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-512x512.png",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/ja.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/en.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/main.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/i18n.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/debug-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/url-params.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/opencv-init.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/wasm-feature-detect.umd.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/loader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/wasm/opencv.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/simd/opencv.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/sw-register.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/portrait-guard.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/early-viewer-mode.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram-math.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/sphyrnidae-link.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/sphyrnidae-link.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/versionCheck.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/offlineDetection.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/export-params.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/renderer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/image-processing-worker.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/shared-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/shaders.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr-input.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-geometry.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-shift.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-exif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-external.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-format-detection.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-creation.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-processing.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-mpo.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-pixel-validation.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-state.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-ui-progress.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-viewer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-alignment.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjust-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjustments.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-crop.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-exif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-export.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-file-loading.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-fullscreen.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-histogram.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-input.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-menu.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-mode.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-parameters.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-text-overlay.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-toast.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-update-notification.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-viewer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-visibility.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-zoom.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-pointer3d.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/pixel-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/safe-storage.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/image-processing-worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/shared-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      }
+    ]
+  },
+  {
+    "engine": "chromium",
+    "scenario": "external-src",
+    "steps": [
+      {
+        "step": "open-application-with-src",
+        "completed": true,
+        "ms": 721,
+        "note": ""
+      },
+      {
+        "step": "read-clipboard-line",
+        "completed": true,
+        "ms": 81,
+        "note": ""
+      },
+      {
+        "step": "settle",
+        "completed": true,
+        "ms": 3001,
+        "note": ""
+      }
+    ],
+    "storage": {
+      "cache_names": [
+        "sphyrnidae-static-0.0.0-dev-nosha-dev",
+        "sphyrnidae-runtime-0.0.0-dev-nosha-dev"
+      ],
+      "cache_entries": 91,
+      "cache_bytes": 28335561,
+      "cache_entries_with_marker": [],
+      "cache_entries_unreadable": 0,
+      "local_storage_keys": [],
+      "session_storage_keys": [],
+      "web_storage_with_marker": false,
+      "indexeddb_databases": []
+    },
+    "console_errors": [],
+    "requests": [
+      {
+        "url": "http://127.0.0.1:34347/index.html?src=https%3A%2F%2Fimage-host.invalid%2Fstereo-test.png&mode=parallel",
+        "method": "GET",
+        "resource_type": "document",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/base.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/layout.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/controls.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/viewer.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/dialogs.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/utilities.css",
+        "method": "GET",
+        "resource_type": "stylesheet",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/wasm-feature-detect.umd.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/loader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/opencv-init.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/early-viewer-mode.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-192x192.png",
+        "method": "GET",
+        "resource_type": "image",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/debug-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/i18n.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/main.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/sw-register.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/safe-storage.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/renderer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-fullscreen.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-viewer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-exif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-crop.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-export.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-worker.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/url-params.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/versionCheck.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-update-notification.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/offlineDetection.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-toast.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/portrait-guard.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/pixel-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-geometry.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-histogram.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-menu.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-visibility.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-pointer3d.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-input.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-mode.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-parameters.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-zoom.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-text-overlay.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-alignment.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjustments.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-file-loading.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/shaders.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr-input.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-exif.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/export-params.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-state.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-format-detection.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-processing.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-mpo.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-creation.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-viewer.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-external.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-ui-progress.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-pixel-validation.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/simd/opencv.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram-math.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjust-config.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/ja.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/en.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-shift.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://image-host.invalid/stereo-test.png",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "image-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": true
+      },
+      {
+        "url": "http://127.0.0.1:34347/sw.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "other",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/index.html",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/base.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/layout.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/controls.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/viewer.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/dialogs.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/css/utilities.css",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/manifest.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/favicon.ico",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-192x192.png",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/icons/icon-512x512.png",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/ja.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/locales/en.json",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/main.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/i18n.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/debug-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/version-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/url-params.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/opencv-init.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/wasm-feature-detect.umd.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/loader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/wasm/opencv.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/opencv/simd/opencv.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/sw-register.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/portrait-guard.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/early-viewer-mode.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/histogram-math.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/image-processing-worker.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/sphyrnidae-link.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/sphyrnidae-link.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/shared-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/globals.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/mode-utils.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/version.js",
+        "method": "GET",
+        "resource_type": "script",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": false,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/versionCheck.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/offlineDetection.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/core/export-params.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/renderer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/shaders.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/vr-input.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-geometry.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/rendering/alignment-shift.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-exif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-external.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-format-detection.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-creation.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-image-processing.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-mpo.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-pixel-validation.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-state.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-ui-progress.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-viewer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/loaders/loader-worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-alignment.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjust-config.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-color-adjustments.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-crop.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-exif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-export.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-file-loading.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-fullscreen.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-histogram.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-input.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-menu.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-mode.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-parameters.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-text-overlay.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-toast.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-update-notification.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-viewer.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-visibility.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-zoom.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/ui/ui-pointer3d.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/logger.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/pixel-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/utils/safe-storage.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/image-processing-worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "http://127.0.0.1:34347/js/workers/shared-utils.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "app-origin",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": false
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      },
+      {
+        "url": "https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js",
+        "method": "GET",
+        "resource_type": "fetch",
+        "classification": "pinned-cdn",
+        "post_bytes": 0,
+        "from_service_worker": true,
+        "served_from_mirror": true
+      }
+    ]
+  }
+]

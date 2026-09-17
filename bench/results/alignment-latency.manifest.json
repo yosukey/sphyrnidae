@@ -1,0 +1,126 @@
+{
+  "bench": "alignment-latency",
+  "generated_at": "2026-09-17T22:42:10.811Z",
+  "commit": "962f449bc850851f4f656f3f16e876c69c53bca5",
+  "working_tree_dirty": true,
+  "source_digest": "83608ddcbf35d7cd3371cdc7a2a4d345f75ba3cdf89c8f56bd9c30d2c8beabc0",
+  "source_files": 80,
+  "source_roots": [
+    "bench",
+    "js",
+    "sw.js"
+  ],
+  "environment": {
+    "node_version": "v22.22.2",
+    "v8_version": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "os_name": "Linux",
+    "os_release": "6.18.44-fc-v33",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_count": 4,
+    "total_memory_bytes": 16877793280
+  },
+  "parameters": {
+    "builds": [
+      "wasm",
+      "simd"
+    ],
+    "algorithms": [
+      "orb",
+      "akaze",
+      "sift"
+    ],
+    "frame_widths": [
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "operating_width": 1024,
+    "content_classes": [
+      "textured",
+      "low-texture",
+      "noisy"
+    ],
+    "base_content": "textured",
+    "scene_seed": 20240917,
+    "max_runs": 30,
+    "warmup_runs": 3,
+    "per_condition_budget_ms": 20000,
+    "gzip_level": 9,
+    "orb_features": 2000,
+    "tables": [
+      {
+        "file": "alignment-latency.csv",
+        "columns": [
+          "sweep",
+          "build",
+          "algorithm",
+          "frame_width",
+          "frame_height",
+          "content",
+          "runs",
+          "warmup_runs",
+          "keypoints_left",
+          "keypoints_right",
+          "match_count",
+          "pipeline_ms_median",
+          "pipeline_ms_p25",
+          "pipeline_ms_p75",
+          "pipeline_ms_iqr",
+          "pipeline_ms_min",
+          "pipeline_ms_max",
+          "cvt_color_ms_median",
+          "detect_left_ms_median",
+          "detect_right_ms_median",
+          "match_ms_median",
+          "estimator_ms_median",
+          "module_load_ms",
+          "wasm_heap_bytes_at_load",
+          "wasm_heap_bytes_after_sweep",
+          "build_bytes",
+          "build_bytes_gzip"
+        ],
+        "row_count": 42
+      },
+      {
+        "file": "alignment-latency-equivalence.csv",
+        "columns": [
+          "algorithm",
+          "frame_width",
+          "content",
+          "build_a",
+          "build_b",
+          "keypoint_count_left",
+          "keypoint_count_right",
+          "match_count",
+          "keypoints_left_equal",
+          "keypoints_right_equal",
+          "descriptors_left_equal",
+          "descriptors_right_equal",
+          "matches_equal",
+          "keypoint_values_differing",
+          "keypoint_values_total",
+          "keypoint_max_abs_diff",
+          "descriptor_bytes_differing",
+          "descriptor_bytes_total",
+          "match_values_differing",
+          "match_values_total",
+          "match_max_abs_diff",
+          "digest_keypoints_left_a",
+          "digest_keypoints_left_b",
+          "digest_keypoints_right_a",
+          "digest_keypoints_right_b",
+          "digest_descriptors_left_a",
+          "digest_descriptors_left_b",
+          "digest_descriptors_right_a",
+          "digest_descriptors_right_b",
+          "digest_matches_a",
+          "digest_matches_b"
+        ],
+        "row_count": 18
+      }
+    ]
+  }
+}

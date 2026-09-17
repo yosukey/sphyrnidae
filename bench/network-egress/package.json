@@ -1,0 +1,13 @@
+{
+  "name": "sphyrnidae-bench-network-egress",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Records every network request the application makes while a workflow runs in a real browser. Kept in its own package so the application itself, and the other benchmarks, stay dependency-free.",
+  "scripts": {
+    "bench": "node run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

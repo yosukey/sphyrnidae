@@ -73,6 +73,7 @@ const PRECACHE_URLS = [
   './sphyrnidae-link.js',
   './js/core/versionCheck.js',
   './js/core/offlineDetection.js',
+  './js/core/export-params.js',
   // Rendering
   './js/rendering/renderer.js',
   './js/rendering/shaders.js',
@@ -80,6 +81,7 @@ const PRECACHE_URLS = [
   './js/rendering/vr-input.js',
   './js/rendering/alignment.js',
   './js/rendering/alignment-geometry.js',
+  './js/rendering/alignment-shift.js',
   // Loaders
   './js/loaders/loader.js',
   './js/loaders/loader-exif.js',

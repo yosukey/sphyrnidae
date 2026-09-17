@@ -1,0 +1,130 @@
+{
+  "bench": "alignment-accuracy-estimator",
+  "generated_at": "2026-09-17T22:42:42.558Z",
+  "commit": "962f449bc850851f4f656f3f16e876c69c53bca5",
+  "working_tree_dirty": true,
+  "source_digest": "83608ddcbf35d7cd3371cdc7a2a4d345f75ba3cdf89c8f56bd9c30d2c8beabc0",
+  "source_files": 80,
+  "source_roots": [
+    "bench",
+    "js",
+    "sw.js"
+  ],
+  "environment": {
+    "node_version": "v22.22.2",
+    "v8_version": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "os_name": "Linux",
+    "os_release": "6.18.44-fc-v33",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_count": 4,
+    "total_memory_bytes": 16877793280
+  },
+  "parameters": {
+    "seed": 20240917,
+    "trials_per_condition": 2000,
+    "base_condition": {
+      "rollDeg": null,
+      "zoomPct": null,
+      "offsetUv": null,
+      "count": 200,
+      "layout": "uniform",
+      "noiseSigmaUv": 0.0003,
+      "outlierFraction": 0,
+      "outlierModel": "random",
+      "distanceModel": "random"
+    },
+    "gate_margins": [
+      0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.3,
+      0.5
+    ],
+    "default_residual_margin_frac": 0.15,
+    "max_roll_deg": 10.203973721731684,
+    "max_zoom_pct": 6,
+    "residual_grid": 51,
+    "tables": [
+      {
+        "file": "alignment-accuracy-estimator.csv",
+        "columns": [
+          "sweep",
+          "condition_id",
+          "field_magnitude",
+          "point_count",
+          "layout",
+          "noise_sigma_uv",
+          "outlier_fraction",
+          "outlier_model",
+          "distance_model",
+          "trials",
+          "adopted",
+          "adoption_rate",
+          "err_d_median",
+          "err_d_p95",
+          "err_e_median",
+          "err_e_p95",
+          "err_f_median",
+          "err_f_p95",
+          "err_roll_deg_median",
+          "err_roll_deg_p95",
+          "err_zoom_pct_median",
+          "err_zoom_pct_p95",
+          "err_roll_relative_median",
+          "err_roll_relative_p95",
+          "err_zoom_relative_median",
+          "err_zoom_relative_p95",
+          "residual_shift_only_rms_median",
+          "residual_applied_rms_median",
+          "residual_applied_rms_p95"
+        ],
+        "row_count": 29
+      },
+      {
+        "file": "alignment-accuracy-estimator-reasons.csv",
+        "columns": [
+          "sweep",
+          "condition_id",
+          "field_magnitude",
+          "point_count",
+          "layout",
+          "noise_sigma_uv",
+          "outlier_fraction",
+          "outlier_model",
+          "distance_model",
+          "outcome",
+          "count",
+          "trials"
+        ],
+        "row_count": 51
+      },
+      {
+        "file": "alignment-accuracy-gate.csv",
+        "columns": [
+          "residual_margin_frac",
+          "is_default",
+          "positive_trials",
+          "positive_adopted",
+          "true_positive_rate",
+          "negative_trials",
+          "negative_adopted",
+          "false_positive_rate",
+          "hard_negative_trials",
+          "hard_negative_adopted",
+          "hard_negative_rate",
+          "positive_residual_applied_rms_median",
+          "positive_residual_shift_only_rms_median",
+          "negative_residual_applied_rms_median",
+          "negative_residual_shift_only_rms_median",
+          "hard_negative_residual_applied_rms_median",
+          "hard_negative_residual_shift_only_rms_median"
+        ],
+        "row_count": 7
+      }
+    ]
+  }
+}

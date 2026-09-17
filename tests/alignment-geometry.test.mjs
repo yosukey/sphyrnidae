@@ -34,8 +34,27 @@ const ok = (cond, msg) => { if (cond) { pass++; } else { fail++; console.error('
 const approx = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 
 // Deterministic pseudo-random (reproducible; no Math.random).
-let seed = 12345;
-const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+//
+// mulberry32: the whole state is 32 bits and every operation on it is an exact
+// 32-bit one, so the sequence visits all 2^32 states before repeating. The
+// textbook `seed = (seed * 1103515245 + 12345) & 0x7fffffff` this replaces
+// cannot: its product reaches 2.4e18, past the 9.0e15 up to which a double
+// still holds integers exactly, so the low bits were rounded away before the
+// mask and the sequence closed into a cycle of 10466 values — the same 10466
+// whatever the seed. The sweeps below draw several thousand values each, so
+// they were re-treading one short cycle rather than covering the space they
+// appear to.
+//
+// SEED may be overridden from the environment to re-run the property sweeps
+// over different inputs; the default keeps a plain run reproducible.
+const SEED = Number(process.env.SEED ?? 12345) >>> 0 || 1;
+let seed = SEED;
+const rnd = () => {
+    seed = (seed + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 const gauss = (s) => {
     const u1 = Math.max(1e-9, rnd()), u2 = rnd();
     return s * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
