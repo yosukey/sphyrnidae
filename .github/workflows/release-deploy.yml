@@ -467,6 +467,24 @@ jobs:
           }
           NODE
 
+      - name: Remove non-shipping directories from the deploy tree
+        # `pages deploy .` uploads the whole working tree, so anything left in it
+        # becomes a publicly reachable URL on the deployed site. bench/ is
+        # developer tooling — measurement scripts, their results, and a local
+        # dataset cache that can run to hundreds of megabytes — none of which is
+        # part of the application. Deleting it here rather than relying on an
+        # ignore file keeps the guarantee independent of Wrangler's ignore-file
+        # semantics, and matches how this job already rewrites the tree in place
+        # (version-config.js, debug-config.js, manifest.json, the CSP) before
+        # uploading. The checkout is disposable, so nothing is lost.
+        run: |
+          rm -rf bench
+          if [ -e bench ]; then
+            echo "::error::bench/ still present in the deploy tree"
+            exit 1
+          fi
+          echo "✓ bench/ removed from the deploy tree"
+
       - name: Deploy to Cloudflare Pages
         # wrangler-action v4 runs on the Node 24 Actions runtime and installs
         # Wrangler v4 by default. The `pages deploy` command remains compatible.

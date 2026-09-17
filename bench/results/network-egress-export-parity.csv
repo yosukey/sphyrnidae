@@ -1,0 +1,2 @@
+engine,checked,application_line,module_line,identical
+chromium,true,https://image-host.invalid/stereo-test.png format=full_sbs mode=parallel,https://image-host.invalid/stereo-test.png format=full_sbs mode=parallel,true

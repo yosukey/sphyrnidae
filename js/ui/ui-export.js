@@ -8,8 +8,8 @@ import { state, CONSTANTS, getModeLayout, BASE_URL } from '../globals.js';
 import { updateMeshScaleForMode, updateUniforms, rebuildShaderForMode, syncInterlaceParityOffset, getMaxTextureSize } from '../rendering/renderer.js';
 import { ensureEven } from '../utils/pixel-utils.js';
 import { setPixelDimensionsInExifSegment } from '../loaders/loader-exif.js';
-import { getModeName, is3DTVModeApplicable } from '../mode-utils.js';
-import { alignTransformToRotZoom } from '../rendering/alignment-geometry.js';
+import { is3DTVModeApplicable } from '../mode-utils.js';
+import { buildListLine, buildViewerUrl } from '../core/export-params.js';
 import * as logger from '../utils/logger.js';
 
 // Cache GIF Worker Blob URL
@@ -1993,80 +1993,6 @@ export async function saveImage(updateZoomDisplay) {
     }
 }
 
-// Below this magnitude a decomposed rotation/zoom is treated as zero and omitted
-// from the export (also the round-off floor for the 4-decimal serialization).
-const ALIGN_EXPORT_EPS = 1e-4;
-
-/**
- * Format a rotation (deg) / zoom (pct) value for URL/list output: fixed 4-decimal
- * precision with trailing zeros trimmed. Ample for the small roll/vertical-zoom
- * magnitudes involved (< ~10 deg / < ~6 %).
- * @param {number} n
- * @returns {string}
- */
-function formatAlignParam(n) {
-    return parseFloat(n.toFixed(4)).toString();
-}
-
-/**
- * Format a normalized crop value (ratio / offset) for URL/list output: fixed
- * 5-decimal precision with trailing zeros trimmed. One extra digit over the
- * rotation/zoom formatter because these ratios scale directly by image pixels.
- * @param {number} n
- * @returns {string}
- */
-function formatCropValue(n) {
-    return parseFloat(n.toFixed(5)).toString();
-}
-
-/**
- * Build the compact `crop=cropX,cropY,offsetX,offsetY` value for the current crop
- * state, or null when no crop is applied (cropX and cropY both zero). The four
- * values are the shader's normalized, resolution-independent crop uniforms, so
- * they round-trip without needing image dimensions.
- * @returns {string|null}
- */
-function buildCropParam() {
-    const { cropX = 0, cropY = 0, offsetX = 0, offsetY = 0 } = state.params;
-    if (!(cropX > 0 || cropY > 0)) return null;
-    return [cropX, cropY, offsetX, offsetY].map(formatCropValue).join(',');
-}
-
-/**
- * Compute the shared URL/list export geometry for the current parallax + alignment
- * state.
- *
- * shiftX -> x (px). The vertical value folds BOTH shiftY and any folded vertical
- * constant f (= -alignTransform[7]) into a single `y` (px), so `y` stays a pure
- * vertical-shift value whether or not geometric refinement is active. The
- * alignTransform roll/vertical-zoom are decomposed into rotation (deg) / zoom (pct).
- * `y` is written unclamped (full image height), so it carries the entire vertical
- * value even when it exceeds the shiftY ±0.1 slider range. On import,
- * rotZoomToAlignTransform rebuilds the roll/zoom matrix and splitVerticalShift keeps
- * the in-range part in shiftY while folding any overflow back into alignTransform[7]
- * (the shader adds the two: srcR.y constant = a[7] - shiftY) — a lossless,
- * rendering-equivalent round-trip of the exported state.
- *
- * @param {HTMLImageElement|undefined} img - current stereo image (for px scale)
- * @returns {{parallaxPx:number, verticalPx:number, rotationDeg:number, zoomPct:number}}
- */
-function computeExportGeometry(img) {
-    const align = state.params.alignTransform;
-    // f = -a[7]: vertical constant carried by the matrix (0 for the shift-only path).
-    const fUV = (Array.isArray(align) && align.length >= 9) ? -align[7] : 0;
-    const verticalUV = (state.params.shiftY || 0) + fUV;
-
-    let parallaxPx = 0;
-    let verticalPx = 0;
-    if (img) {
-        parallaxPx = Math.round((state.params.shiftX || 0) * img.width);
-        verticalPx = Math.round(verticalUV * img.height);
-    }
-
-    const rz = alignTransformToRotZoom(align) || { rotationDeg: 0, zoomPct: 0 };
-    return { parallaxPx, verticalPx, rotationDeg: rz.rotationDeg, zoomPct: rz.zoomPct };
-}
-
 /**
  * Generate clipboard export string in list format
  * Format: URL format=value mode=mode_name x=value y=value r=value z=value crop=cx,cy,ox,oy
@@ -2078,57 +2004,14 @@ export function generateClipboardListFormat() {
         return null;
     }
 
-    const url = state.externalImageUrl;
-    const mode = state.params.mode;
-    let format = state.currentImageFormat || 'half_sbs';
-
-    // Get current image dimensions to convert shift/alignment to pixels
-    const img = state.material?.uniforms?.map?.value?.image;
-    const { parallaxPx, verticalPx, rotationDeg, zoomPct } = computeExportGeometry(img);
-
-    // Build key=value pairs (only include non-default values)
-    const parts = [url];
-
-    // Always include format
-    parts.push(`format=${format}`);
-
-    // Include mode if not default (anaglyph)
-    // Use mode name instead of number for readability
-    if (mode !== 0) {
-        const modeName = getModeName(mode);
-        if (modeName) {
-            parts.push(`mode=${modeName}`);
-        } else {
-            // Fallback to number if name not found
-            parts.push(`mode=${mode}`);
-        }
-    }
-
-    // Include x if non-zero
-    if (parallaxPx !== 0) {
-        parts.push(`x=${parallaxPx}`);
-    }
-
-    // Include y if non-zero
-    if (verticalPx !== 0) {
-        parts.push(`y=${verticalPx}`);
-    }
-
-    // Include rotation/zoom only when geometric refinement is in effect
-    if (Math.abs(rotationDeg) >= ALIGN_EXPORT_EPS) {
-        parts.push(`r=${formatAlignParam(rotationDeg)}`);
-    }
-    if (Math.abs(zoomPct) >= ALIGN_EXPORT_EPS) {
-        parts.push(`z=${formatAlignParam(zoomPct)}`);
-    }
-
-    // Include the crop window only when a crop is applied
-    const cropStr = buildCropParam();
-    if (cropStr) {
-        parts.push(`crop=${cropStr}`);
-    }
-
-    return parts.join(' ');
+    return buildListLine({
+        url: state.externalImageUrl,
+        params: state.params,
+        format: state.currentImageFormat || 'half_sbs',
+        // Pixel scale for x/y. Absent until the texture is in place, in which
+        // case both are written as 0, exactly as before.
+        image: state.material?.uniforms?.map?.value?.image ?? null,
+    });
 }
 
 /**
@@ -2141,46 +2024,13 @@ export function generateClipboardViewerFormat() {
         return null;
     }
 
-    const baseUrl = BASE_URL;
-    const url = state.externalImageUrl;
-    const mode = state.params.mode;
-    let format = state.currentImageFormat || 'half_sbs';
-
-    // Get current image dimensions to convert shift/alignment to pixels
-    const img = state.material?.uniforms?.map?.value?.image;
-    const { parallaxPx, verticalPx, rotationDeg, zoomPct } = computeExportGeometry(img);
-
-    // Build query string
-    const params = new URLSearchParams();
-    params.set('src', url);
-
-    // Use mode name instead of number
-    const modeName = getModeName(mode);
-    if (modeName) {
-        params.set('mode', modeName);
-    } else {
-        // Fallback to number if name not found
-        params.set('mode', mode.toString());
-    }
-
-    params.set('x', parallaxPx.toString());
-    params.set('y', verticalPx.toString());
-    // Include rotation/zoom only when geometric refinement is in effect, so plain
-    // shift-only links stay unchanged.
-    if (Math.abs(rotationDeg) >= ALIGN_EXPORT_EPS) {
-        params.set('r', formatAlignParam(rotationDeg));
-    }
-    if (Math.abs(zoomPct) >= ALIGN_EXPORT_EPS) {
-        params.set('z', formatAlignParam(zoomPct));
-    }
-    // Include the crop window only when a crop is applied
-    const cropStr = buildCropParam();
-    if (cropStr) {
-        params.set('crop', cropStr);
-    }
-    params.set('format', format);
-
-    return `${baseUrl}?${params.toString()}`;
+    return buildViewerUrl({
+        baseUrl: BASE_URL,
+        url: state.externalImageUrl,
+        params: state.params,
+        format: state.currentImageFormat || 'half_sbs',
+        image: state.material?.uniforms?.map?.value?.image ?? null,
+    });
 }
 
 /**

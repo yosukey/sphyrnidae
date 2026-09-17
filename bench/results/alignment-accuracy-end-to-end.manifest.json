@@ -1,0 +1,159 @@
+{
+  "bench": "alignment-accuracy-end-to-end",
+  "generated_at": "2026-09-17T22:46:30.489Z",
+  "commit": "962f449bc850851f4f656f3f16e876c69c53bca5",
+  "working_tree_dirty": true,
+  "source_digest": "83608ddcbf35d7cd3371cdc7a2a4d345f75ba3cdf89c8f56bd9c30d2c8beabc0",
+  "source_files": 80,
+  "source_roots": [
+    "bench",
+    "js",
+    "sw.js"
+  ],
+  "environment": {
+    "node_version": "v22.22.2",
+    "v8_version": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "os_name": "Linux",
+    "os_release": "6.18.44-fc-v33",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_count": 4,
+    "total_memory_bytes": 16877793280
+  },
+  "parameters": {
+    "corpus": "middlebury",
+    "corpus_description": "MiddEval3 trainingH (half resolution), https://vision.middlebury.edu/stereo/submit3/",
+    "scenes": [
+      "Adirondack",
+      "ArtL",
+      "Jadeplant",
+      "Motorcycle",
+      "MotorcycleE",
+      "Piano",
+      "PianoL",
+      "Pipes",
+      "Playroom",
+      "Playtable",
+      "PlaytableP",
+      "Recycle",
+      "Shelves",
+      "Teddy",
+      "Vintage"
+    ],
+    "conditions": [
+      {
+        "name": "none",
+        "rollDeg": 0,
+        "zoomPct": 0,
+        "dyPx": 0
+      },
+      {
+        "name": "shift-only",
+        "rollDeg": 0,
+        "zoomPct": 0,
+        "dyPx": 8
+      },
+      {
+        "name": "roll-small",
+        "rollDeg": 1,
+        "zoomPct": 0,
+        "dyPx": 3
+      },
+      {
+        "name": "roll-large",
+        "rollDeg": 4,
+        "zoomPct": 0,
+        "dyPx": -5
+      },
+      {
+        "name": "zoom",
+        "rollDeg": 0,
+        "zoomPct": 2,
+        "dyPx": 4
+      },
+      {
+        "name": "roll-and-zoom",
+        "rollDeg": 2.5,
+        "zoomPct": 1.5,
+        "dyPx": 6
+      },
+      {
+        "name": "keystone",
+        "rollDeg": 2,
+        "zoomPct": 1,
+        "dyPx": 4,
+        "keystone": 0.00006
+      }
+    ],
+    "algorithms": [
+      "orb",
+      "akaze",
+      "sift"
+    ],
+    "opencv_build": "simd",
+    "correspondence_stride": 2,
+    "mask": "mask0nocc.png, pixels valued 255 (visible in both views)",
+    "analysis_resize_max_dimension": 1024,
+    "resize_interpolation": "INTER_AREA",
+    "warp_interpolation": "INTER_LINEAR, BORDER_REPLICATE",
+    "tables": [
+      {
+        "file": "alignment-accuracy-end-to-end.csv",
+        "columns": [
+          "scene",
+          "condition",
+          "algorithm",
+          "eye_width",
+          "height",
+          "analysis_width",
+          "analysis_height",
+          "correspondences",
+          "matches",
+          "applied_roll_deg",
+          "applied_zoom_pct",
+          "applied_dy_px",
+          "adopted",
+          "reason",
+          "recovered_roll_deg",
+          "recovered_zoom_pct",
+          "best_fit_roll_deg",
+          "best_fit_zoom_pct",
+          "err_roll_deg",
+          "err_zoom_pct",
+          "uncorrected_rms_px",
+          "uncorrected_p95_px",
+          "shift_only_rms_px",
+          "shift_only_p95_px",
+          "affine_rms_px",
+          "affine_p95_px",
+          "best_fit_rms_px",
+          "best_fit_p95_px",
+          "uncorrected_rms_uv",
+          "shift_only_rms_uv",
+          "affine_rms_uv",
+          "best_fit_rms_uv"
+        ],
+        "row_count": 315
+      },
+      {
+        "file": "alignment-accuracy-depth.csv",
+        "columns": [
+          "scene",
+          "condition",
+          "algorithm",
+          "method",
+          "correspondences",
+          "scene_disparity_rms_px",
+          "scene_disparity_p05_p95_range_px",
+          "horizontal_disparity_change_rms_px",
+          "horizontal_disparity_change_max_px",
+          "horizontal_disparity_change_rms_uv",
+          "horizontal_disparity_change_max_uv",
+          "fitted"
+        ],
+        "row_count": 945
+      }
+    ]
+  }
+}
