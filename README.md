@@ -225,6 +225,14 @@ The committed regression tests are framework-free and require a current Node.js 
 node --test tests/*.test.mjs
 ```
 
+The alignment-geometry tests check their properties over generated inputs. They
+run from a fixed seed so a plain run is reproducible, and `SEED` re-runs the
+same properties over different inputs:
+
+```sh
+SEED=20240917 node tests/alignment-geometry.test.mjs
+```
+
 The release workflow additionally performs JavaScript syntax checks, validates
 the Service Worker precache manifest, and verifies the import-map CSP hash after
 minification. Run the regression tests after changes to image geometry, crop,

@@ -1,0 +1,8 @@
+residual_margin_frac,is_default,positive_trials,positive_adopted,true_positive_rate,negative_trials,negative_adopted,false_positive_rate,hard_negative_trials,hard_negative_adopted,hard_negative_rate,positive_residual_applied_rms_median,positive_residual_shift_only_rms_median,negative_residual_applied_rms_median,negative_residual_shift_only_rms_median,hard_negative_residual_applied_rms_median,hard_negative_residual_shift_only_rms_median
+0,false,2000,1491,0.7455,2000,0,0,2000,1226,0.613,0.000233976,0.001899985,1.802e-5,1.802e-5,0.001110234,0.000585349
+0.05,false,2000,1459,0.7295,2000,0,0,2000,446,0.223,0.000228056,0.001795719,1.838e-5,1.838e-5,0.000807139,0.000620718
+0.1,false,2000,1459,0.7295,2000,0,0,2000,101,0.0505,0.000234346,0.001875332,1.857e-5,1.857e-5,0.000650299,0.00061962
+0.15,true,2000,1443,0.7215,2000,0,0,2000,11,0.0055,0.000233219,0.001865094,1.802e-5,1.802e-5,0.000563673,0.000554808
+0.2,false,2000,1466,0.733,2000,0,0,2000,3,0.0015,0.000240133,0.001840768,1.863e-5,1.863e-5,0.000590523,0.000590228
+0.3,false,2000,1457,0.7285,2000,0,0,2000,0,0,0.000215263,0.001578635,1.791e-5,1.791e-5,0.000587232,0.000587232
+0.5,false,2000,1383,0.6915,2000,0,0,2000,0,0,0.000264201,0.001865454,1.891e-5,1.891e-5,0.000602008,0.000602008

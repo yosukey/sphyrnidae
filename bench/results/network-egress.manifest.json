@@ -1,0 +1,112 @@
+{
+  "bench": "network-egress",
+  "generated_at": "2026-09-17T22:50:08.087Z",
+  "commit": "962f449bc850851f4f656f3f16e876c69c53bca5",
+  "working_tree_dirty": true,
+  "source_digest": "83608ddcbf35d7cd3371cdc7a2a4d345f75ba3cdf89c8f56bd9c30d2c8beabc0",
+  "source_files": 80,
+  "source_roots": [
+    "bench",
+    "js",
+    "sw.js"
+  ],
+  "environment": {
+    "node_version": "v22.22.2",
+    "v8_version": "12.4.254.21-node.39",
+    "platform": "linux",
+    "arch": "x64",
+    "os_name": "Linux",
+    "os_release": "6.18.44-fc-v33",
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpu_count": 4,
+    "total_memory_bytes": 16877793280
+  },
+  "parameters": {
+    "engines_requested": [
+      "chromium"
+    ],
+    "engines_run": [
+      {
+        "engine": "chromium",
+        "version": "141.0.7390.37"
+      }
+    ],
+    "playwright_version": "1.63.0",
+    "pinned_cdn_urls": [
+      "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.min.js",
+      "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.core.min.js",
+      "https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js",
+      "https://cdn.jsdelivr.net/npm/exifreader@4.14.1/dist/exif-reader.js",
+      "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+      "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js",
+      "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js",
+      "https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js"
+    ],
+    "pinned_assets_served_from": "local mirror, bytes checked against the integrity hashes the application declares",
+    "response_headers": "the /* block of the repository _headers file, so the page runs under the deployed CSP",
+    "test_image": {
+      "width": 1280,
+      "height": 640,
+      "format": "PNG, side-by-side, with a tEXt marker chunk"
+    },
+    "scenarios": [
+      "local-file",
+      "external-src"
+    ],
+    "marker_recorded": false,
+    "tables": [
+      {
+        "file": "network-egress.csv",
+        "columns": [
+          "engine",
+          "scenario",
+          "steps_completed",
+          "steps_total",
+          "requests_total",
+          "post_bytes_total",
+          "requests_app_origin",
+          "requests_pinned_cdn",
+          "requests_image_origin",
+          "requests_other",
+          "service_worker_requests",
+          "service_worker_visibility",
+          "cache_names",
+          "cache_entries",
+          "cache_bytes",
+          "cache_entries_with_marker",
+          "web_storage_with_marker",
+          "indexeddb_databases",
+          "console_errors"
+        ],
+        "row_count": 2
+      },
+      {
+        "file": "network-egress-requests.csv",
+        "columns": [
+          "engine",
+          "scenario",
+          "classification",
+          "method",
+          "resource_type",
+          "from_service_worker",
+          "served_from_mirror",
+          "requests",
+          "post_bytes_total",
+          "distinct_urls"
+        ],
+        "row_count": 21
+      },
+      {
+        "file": "network-egress-export-parity.csv",
+        "columns": [
+          "engine",
+          "checked",
+          "application_line",
+          "module_line",
+          "identical"
+        ],
+        "row_count": 1
+      }
+    ]
+  }
+}

@@ -1,1 +1,6 @@
 node_modules/
+
+# Local cache of the third-party corpora the benchmarks measure against.
+# bench/alignment-accuracy/fetch-datasets.mjs downloads these; they are not
+# redistributed from here.
+bench/datasets/
