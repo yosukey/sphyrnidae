@@ -21,6 +21,7 @@ import { checkForUpdates } from './core/versionCheck.js';
 import { initUpdateNotification } from './ui/ui-update-notification.js';
 import { initOfflineDetection, cleanupOfflineDetection } from './core/offlineDetection.js';
 import { showToast } from './ui/ui-toast.js';
+import { externalFrameSource, renderExternalOutput } from './ui/ui-external-output.js';
 import * as logger from './utils/logger.js';
 
 // Animation tracking variable for Wiggle mode
@@ -29,18 +30,72 @@ let lastWiggleTime = 0;
 // Power-saving mode: control animation loop when the tab is hidden
 let isAnimating = false;
 let animationFrameId = null;
+// The external window the pending frame was asked of (null: this page's window).
+// Its id has to be cancelled on the window that issued it.
+let animationFrameSource = null;
+
+/**
+ * Whether there is anything in sight to draw for: this page, or the external
+ * output window (which keeps drawing while the page is minimised or covered).
+ */
+function shouldAnimate() {
+    return !document.hidden || !!externalFrameSource();
+}
+
+/**
+ * Ask for the next animation frame, of the external output window while it is in
+ * sight (its frames come at the stereo monitor's refresh and keep coming while the
+ * page is out of sight, which gets none), otherwise of this page's window.
+ */
+function requestNextFrame() {
+    const source = externalFrameSource();
+    if (source) {
+        animationFrameSource = source;
+        animationFrameId = source.requestFrame(animate);
+    } else {
+        animationFrameSource = null;
+        animationFrameId = requestAnimationFrame(animate);
+    }
+}
+
+/** Cancel the pending animation frame, on whichever window it was asked of. */
+function cancelPendingFrame() {
+    if (animationFrameId !== null) {
+        if (animationFrameSource) {
+            animationFrameSource.cancelFrame(animationFrameId);
+        } else {
+            cancelAnimationFrame(animationFrameId);
+        }
+    }
+    animationFrameId = null;
+    animationFrameSource = null;
+}
+
+/**
+ * Start, stop or re-aim the loop after the page or the external window came into
+ * or went out of sight, or the external window opened or closed. A frame pending on
+ * a window that went out of sight (or closed) would never come, so a running loop
+ * asks again of the window in sight now. VR owns the loop while it is on.
+ */
+function refreshAnimationLoop() {
+    if (state.renderer?.xr?.enabled) return;
+    if (!shouldAnimate()) {
+        stopAnimation();
+        return;
+    }
+    if (!isAnimating) {
+        startAnimation();
+        return;
+    }
+    cancelPendingFrame();
+    requestNextFrame();
+}
 
 // Named handler for visibilitychange so it can be removed during cleanup
 function handleVisibilityChange() {
-    if (document.hidden) {
-        // Tab hidden: stop animation
-        stopAnimation();
-    } else {
-        // Tab visible: resume animation
-        if (!isAnimating) {
-            startAnimation();
-        }
-    }
+    // Tab hidden: stop animation, unless the external window is still in sight.
+    // Tab visible: resume animation.
+    refreshAnimationLoop();
 }
 
 // Initialization flag (prevent duplicate initialization)
@@ -128,7 +183,7 @@ async function init() {
     };
 
     const handleWebGLContextRestored = () => {
-        if (!document.hidden && !isAnimating) {
+        if (shouldAnimate() && !isAnimating) {
             startAnimation();
         }
     };
@@ -314,6 +369,9 @@ async function init() {
     // Stop the animation loop when the page is hidden
     // Resume on visibility to reduce unnecessary CPU/GPU usage
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    // The external output window opened, closed, or came into or out of sight:
+    // ask the next frame of the window in sight (ui-external-output.js).
+    window.addEventListener('external-output-frames', refreshAnimationLoop);
 
     // Start the animation loop
     startAnimation();
@@ -348,6 +406,7 @@ function setupPageLifecycleCleanup() {
 
             // Remove visibilitychange listener (registered in init)
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('external-output-frames', refreshAnimationLoop);
 
             // Clean up all UI resources (single entry point for UI cleanup)
             // This orchestrates cleanup of all UI submodules:
@@ -768,10 +827,7 @@ function startAnimation() {
  */
 function stopAnimation() {
     isAnimating = false;
-    if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
+    cancelPendingFrame();
 }
 
 /**
@@ -785,10 +841,7 @@ function stopAnimation() {
  * dead, so the cancel is a harmless no-op and this simply restarts rendering.
  */
 export function resumeAnimationLoop() {
-    if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
+    cancelPendingFrame();
     isAnimating = true;
     animate();
 }
@@ -812,7 +865,7 @@ export function animate() {
     // In VR mode, WebXRManager manages the animation loop automatically
     // In normal mode, use requestAnimationFrame
     if (!state.renderer.xr.enabled) {
-        animationFrameId = requestAnimationFrame(animate);
+        requestNextFrame();
     }
 
     // Animation handling for Wiggle mode (6)
@@ -835,7 +888,16 @@ export function animate() {
 
     if (state.renderer.xr.enabled) {
         updateVRNavigation();
+        render();
+        return;
     }
 
-    render();
+    // The page's own canvas is drawn while it is in sight; with only the external
+    // window in sight (the page minimised or covered) its frames are for that.
+    if (!document.hidden) {
+        render();
+    }
+
+    // The external output window, after the page (ui-external-output.js).
+    renderExternalOutput();
 }

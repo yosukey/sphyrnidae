@@ -84,6 +84,7 @@ const PRECACHE_URLS = [
   './js/rendering/alignment.js',
   './js/rendering/alignment-geometry.js',
   './js/rendering/alignment-shift.js',
+  './js/rendering/external-output.js',
   // Loaders
   './js/loaders/loader.js',
   './js/loaders/loader-exif.js',
@@ -121,6 +122,7 @@ const PRECACHE_URLS = [
   './js/ui/ui-zoom.js',
   './js/ui/ui-pointer3d.js',
   './js/ui/external-window.js',
+  './js/ui/ui-external-output.js',
   // Utils
   './js/utils/logger.js',
   './js/utils/pixel-utils.js',

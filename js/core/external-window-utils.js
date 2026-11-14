@@ -71,6 +71,26 @@ export function pickExternalScreen(screens, current, remembered) {
     return others.find(s => !s.isPrimary) || others[0];
 }
 
+/**
+ * The pointer the external window draws: the 3D pointer exactly as the page draws
+ * it while that is on; otherwise the mouse's place over the image as a flat arrow —
+ * zero parallax, at screen depth — so the audience at the stereo monitor sees what
+ * the operator points at. Positions are in the shader's per-eye image space
+ * (pointer3dX/Y), so they land on the same image point whatever each window's size.
+ * @param {{pointer3dEnabled:boolean, pointer3dVisible:boolean, pointerOverImage:boolean,
+ *          pointer3dX:number, pointer3dY:number, pointer3dParallax:number}} s - app state
+ * @returns {{enabled:number, x:number, y:number, parallax:number}} shader uniform values
+ */
+export function externalPointer(s) {
+    const finite = (v, fallback) => (Number.isFinite(v) ? v : fallback);
+    const x = finite(s.pointer3dX, 0.5);
+    const y = finite(s.pointer3dY, 0.5);
+    if (s.pointer3dEnabled) {
+        return { enabled: s.pointer3dVisible ? 1.0 : 0.0, x, y, parallax: finite(s.pointer3dParallax, 0) };
+    }
+    return { enabled: s.pointerOverImage ? 1.0 : 0.0, x, y, parallax: 0.0 };
+}
+
 /** The events that say a document entered or left full screen. */
 const FULLSCREEN_CHANGE_EVENTS = ['fullscreenchange', 'webkitfullscreenchange'];
 
