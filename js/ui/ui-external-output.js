@@ -9,10 +9,10 @@
  * monitor beside the one the app is operated on.
  *
  * The render loop (main.js) draws it after the page every frame
- * (renderExternalOutput), and asks frames of its window while that window is in
- * sight (externalFrameSource) — they come at the stereo monitor's refresh, and keep
- * coming while the page is out of sight. Whenever that may have changed this
- * module dispatches 'external-output-frames' on window.
+ * (renderExternalOutput). While the page is out of sight, which the browser gives
+ * no frames, the loop asks them of this window instead (externalFrameSource), so it
+ * goes on being drawn. Whenever that may have changed this module dispatches
+ * 'external-output-frames' on window.
  */
 
 import { state } from '../globals.js';
@@ -59,8 +59,8 @@ export function isExternalOutputOpen() {
 }
 
 /**
- * The window to ask animation frames of: the external one while it is open and in
- * sight, otherwise null (the page's own).
+ * The external window, while it is open and in sight; otherwise null. The render
+ * loop asks it for frames while the page itself is out of sight.
  * @returns {import('./external-window.js').ExternalWindow|null}
  */
 export function externalFrameSource() {
@@ -213,6 +213,18 @@ export function setupExternalOutputControls(signal) {
     window.addEventListener('app-language-changed', () => {
         updateExternalOutputButtons();
         output?.setTexts(windowTexts());
+    }, { signal });
+
+    // A new image on the page. With nothing in sight the render loop is stopped
+    // (a viewer slideshow can still advance meanwhile), so the window would hold
+    // the previous image until it was looked at again: let it follow now.
+    window.addEventListener('stereo-image-loaded', () => {
+        if (!output || output.closed || state.externalOutputHold) return;
+        try {
+            output.draw({ render: false });
+        } catch (err) {
+            logger.warn('ExternalOutput', 'Could not follow the new image:', err);
+        }
     }, { signal });
 
     updateExternalOutputButtons();

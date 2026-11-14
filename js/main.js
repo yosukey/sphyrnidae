@@ -30,11 +30,19 @@ let lastWiggleTime = 0;
 
 // Power-saving mode: control animation loop when the tab is hidden
 let isAnimating = false;
-// The pending animation frame: asked of the external output window while it is in
-// sight (its frames come at the stereo display's refresh and keep coming while this
-// page is out of sight, which gets none), otherwise of this page's window; cancelled
-// on whichever window issued it (core/frame-loop.js).
-const frames = new FrameRequester(window, externalFrameSource);
+/**
+ * The external window to ask frames of instead of this page's: only while this page
+ * is out of sight (minimised or covered), which the browser gives no frames, and the
+ * external window is open and in sight. While this page is in sight its own frames
+ * drive the loop, so it never waits on another window's.
+ */
+function externalFramesWhilePageHidden() {
+    return document.hidden ? externalFrameSource() : null;
+}
+
+// The pending animation frame, cancelled on whichever window issued it
+// (core/frame-loop.js).
+const frames = new FrameRequester(window, externalFramesWhilePageHidden);
 
 /**
  * Whether there is anything in sight to draw for: this page, or the external

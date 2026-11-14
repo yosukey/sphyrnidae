@@ -4,10 +4,11 @@
  * what the loop does when that may have changed. The windows are passed in, so this
  * runs under Node (tests/frame-loop.test.mjs).
  *
- * While the external output window is open and in sight, frames are asked of it:
- * they come at the stereo display's refresh, and keep coming while the page is out
- * of sight (minimised or covered), which the browser gives none. Otherwise they are
- * asked of the page's window, and with neither in sight the loop stops.
+ * Frames are asked of the page's window while the page is in sight. While it is out
+ * of sight (minimised or covered), which the browser gives no frames, they are asked
+ * of the external output window if that is open and in sight, so it goes on being
+ * drawn. With neither in sight the loop stops. (Which window FrameRequester asks is
+ * the frameSource main.js gives it.)
  */
 
 /**
@@ -38,7 +39,7 @@ export class FrameRequester {
     /**
      * @param {{requestAnimationFrame: Function, cancelAnimationFrame: Function}} pageWindow
      * @param {() => ({requestFrame: Function, cancelFrame: Function}|null)} frameSource -
-     *   the external window to ask frames of while it is in sight, else null
+     *   the external window to ask frames of instead of the page's, or null
      */
     constructor(pageWindow, frameSource) {
         this.pageWindow = pageWindow;
@@ -55,9 +56,8 @@ export class FrameRequester {
     }
 
     /**
-     * Ask for the next frame, of the external window while it is in sight, otherwise
-     * of the page's window. Any frame still pending is cancelled first, so there is
-     * never more than one.
+     * Ask for the next frame, of the window frameSource names, else of the page's.
+     * Any frame still pending is cancelled first, so there is never more than one.
      * @param {FrameRequestCallback} callback
      */
     request(callback) {

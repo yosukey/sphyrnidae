@@ -236,7 +236,10 @@ export class ExternalOutput {
      */
     syncMaterial(src) {
         if (src !== this.source || !this.material) {
-            if (this.material) this.material.dispose();
+            if (this.material) {
+                this.material.dispose();
+                this.forgetLastRender();
+            }
             this.material = null;
             this.source = src;
             if (src.uniforms) {
@@ -360,6 +363,7 @@ export class ExternalOutput {
                 this.material = null;
                 this.source = null;
             }
+            this.forgetLastRender();
         }
         if (render) this.track(() => this.renderer.render(this.scene, this.camera));
         this.pruneHooks();
@@ -384,6 +388,17 @@ export class ExternalOutput {
         } finally {
             proto.addEventListener = add;
         }
+    }
+
+    /**
+     * Drop three's render list for this window's scene. It keeps the plane, its
+     * geometry and its material from the last frame drawn until the next one is, so
+     * while this window is out of sight it would hold a replaced material — and
+     * through its uniforms the old image — however the references here moved on.
+     * Built again on the next frame drawn.
+     */
+    forgetLastRender() {
+        try { this.renderer.renderLists.dispose(); } catch (e) { /* no renderer, nothing kept */ }
     }
 
     /**

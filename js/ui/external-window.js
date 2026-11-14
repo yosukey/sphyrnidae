@@ -32,8 +32,13 @@ import {
 import { requestFullscreenCompat } from './ui-fullscreen.js';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../utils/safe-storage.js';
 
-/** The window's name: opened again, the same window is reused, where it was left. */
-export const EXTERNAL_WINDOW_NAME = 'sphyrnidae-stereo-output';
+/**
+ * The window's name: opened again from this page, the same window is reused, where
+ * it was left. It is this page's own (a random part per page load), so another tab
+ * of the app in the same browsing context group cannot find the window by name and
+ * take it over, the two rebuilding it in turn.
+ */
+export const EXTERNAL_WINDOW_NAME = `sphyrnidae-stereo-output-${Math.random().toString(36).slice(2, 10)}`;
 
 /** Which monitor was chosen last time (its label), to choose again. */
 const SCREEN_KEY = 'sphyrnidae_external_screen';

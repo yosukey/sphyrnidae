@@ -3,7 +3,8 @@
  *
  * Which window the render loop asks its frames of (js/core/frame-loop.js), and that
  * the loop built on it in main.js never runs two frame chains, never dies while
- * something is in sight, and stops when nothing is.
+ * something is in sight, runs on the page's own frames while the page is in sight,
+ * and stops when nothing is.
  *
  * main.js itself pulls in three.js/WebGL, so the loop is modelled here exactly as
  * main.js drives it (animate / startAnimation / stopAnimation / refreshAnimationLoop),
@@ -72,7 +73,9 @@ function simulate(seed, steps) {
     const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
     const page = new FakeWindow('page'), ext = new FakeWindow('ext');
     const world = { pageHidden: false, extOpen: false, extHidden: false };
-    const frameSource = () => (world.extOpen && !world.extHidden ? ext : null);
+    const extInSight = () => (world.extOpen && !world.extHidden ? ext : null);
+    // As main.js (externalFramesWhilePageHidden): the external window only while the page is out of sight.
+    const frameSource = () => (world.pageHidden ? extInSight() : null);
     const frames = new FrameRequester(page, frameSource);
     let animating = false;
     let drawn = 0;
@@ -82,7 +85,7 @@ function simulate(seed, steps) {
     function startAnimation() { if (!animating) { animating = true; animate(); } }
     function stopAnimation() { animating = false; frames.cancel(); }
     function refreshAnimationLoop() {
-        switch (loopAction({ xr: false, pageHidden: world.pageHidden, externalInSight: !!frameSource(), animating })) {
+        switch (loopAction({ xr: false, pageHidden: world.pageHidden, externalInSight: !!extInSight(), animating })) {
             case 'stop': stopAnimation(); break;
             case 'start': startAnimation(); break;
             case 'reaim': frames.request(animate); break;
@@ -108,11 +111,12 @@ function simulate(seed, steps) {
         else { what = 'external frame'; if (world.extOpen && !world.extHidden) ext.fire(); }
 
         const pending = page.pending.size + ext.pending.size;
-        const inSight = !world.pageHidden || !!frameSource();
+        const inSight = !world.pageHidden || !!extInSight();
         if (pending > 1) problems.push(`step ${i} (${what}): ${pending} frames pending — two chains`);
         if (inSight) {
             if (!animating || pending !== 1) problems.push(`step ${i} (${what}): something in sight but ${pending} frames pending (animating ${animating}) — the loop died`);
-            const want = frameSource() ? ext : page;
+            // The page's own frames while it is in sight; the external window's only while it is not.
+            const want = world.pageHidden ? ext : page;
             if (pending === 1 && want.pending.size !== 1) problems.push(`step ${i} (${what}): frame pending on ${want === ext ? 'the page' : 'the external window'}, not on the one in sight`);
         } else if (animating || pending !== 0) {
             problems.push(`step ${i} (${what}): nothing in sight but the loop runs (${pending} pending)`);
@@ -139,7 +143,9 @@ function simulate(seed, steps) {
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^[ \t]*\/\/[^\n]*$/gm, '')
         .replace(/\s+/g, ' ');
-    ok(/const frames = new FrameRequester\(window, externalFrameSource\);/.test(main), 'main.js asks its frames through FrameRequester');
+    ok(/const frames = new FrameRequester\(window, externalFramesWhilePageHidden\);/.test(main), 'main.js asks its frames through FrameRequester');
+    ok(/function externalFramesWhilePageHidden\(\) \{ return document\.hidden \? externalFrameSource\(\) : null; \}/.test(main),
+        'main.js: the external window\'s frames only while the page is out of sight');
     ok(/function requestNextFrame\(\) \{ frames\.request\(animate\); \}/.test(main), 'main.js: requestNextFrame asks for animate');
     ok(/function stopAnimation\(\) \{ isAnimating = false; cancelPendingFrame\(\); \}/.test(main), 'main.js: stopAnimation cancels the pending frame');
     ok(/function cancelPendingFrame\(\) \{ frames\.cancel\(\); \}/.test(main), 'main.js: cancelPendingFrame cancels through FrameRequester');

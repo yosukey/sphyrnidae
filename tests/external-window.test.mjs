@@ -160,6 +160,12 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'out of sight the external window is not drawn, but follows the page (no replaced image kept alive)');
     ok(/if \(render\) this\.track\(\(?\(\) => this\.renderer\.render\(this\.scene, this\.camera\)\)?\); this\.pruneHooks\(\);/.test(output),
         'dead dispose hooks are dropped whether or not a frame was drawn');
+    ok(/if \(this\.material\) \{ this\.material\.dispose\(\); this\.forgetLastRender\(\); \}/.test(output)
+        && /this\.source = null; \} this\.forgetLastRender\(\); \}/.test(output)
+        && /forgetLastRender\(\) \{ try \{ this\.renderer\.renderLists\.dispose\(\);/.test(output),
+        'a replaced material is not kept by three\'s render list from the last frame drawn');
+    ok(/window\.addEventListener\('stereo-image-loaded', \(?\(\) => \{ if \(!output \|\| output\.closed \|\| state\.externalOutputHold\) return; try \{ output\.draw\(\{ render: false \}\);/.test(code('js/ui/ui-external-output.js')),
+        'a new image is followed even while nothing is in sight and the loop is stopped');
     ok(/if \(dst\.gridEnabled\) dst\.gridEnabled\.value = 0(?:\.0)?;/.test(output), 'the grid is never drawn in the external window');
     ok(/const p = externalPointer\(state\);/.test(output), 'the external window draws externalPointer');
     // Dispose hooks: dead entries go every frame, not only past a threshold.
