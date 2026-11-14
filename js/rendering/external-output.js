@@ -65,12 +65,14 @@ function copiable(value) {
 export class ExternalOutput {
     /**
      * Open the window and a renderer on its canvas. Call it straight from the
-     * click (a popup blocker otherwise refuses). Null when the window could not be
-     * opened, or WebGL refused a second context.
+     * click (a popup blocker otherwise refuses). On failure `output` is null and
+     * `failure` says why: 'blocked' — the browser refused the window (a popup
+     * blocker); 'webgl' — the window opened but WebGL refused a second context, and
+     * the window was closed again.
      * @param {Window} opener
      * @param {import('../ui/external-window.js').ExternalWindowTexts} texts
      * @param {ExternalOutputEvents} events
-     * @returns {ExternalOutput|null}
+     * @returns {{output: ExternalOutput|null, failure: null|'blocked'|'webgl'}}
      */
     static open(opener, texts, events) {
         let out = null;
@@ -86,14 +88,14 @@ export class ExternalOutput {
                 events.frames?.();
             },
         });
-        if (!win) return null;
+        if (!win) return { output: null, failure: 'blocked' };
         try {
             out = new ExternalOutput(win, events);
         } catch (e) {
             out = null;
         }
-        if (!out) { win.close(); return null; }
-        return out;
+        if (!out) { win.close(); return { output: null, failure: 'webgl' }; }
+        return { output: out, failure: null };
     }
 
     /**

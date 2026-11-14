@@ -137,7 +137,10 @@ function vUvToBaseUv(u, v) {
  * @returns {{ u: number, v: number } | null} UV coordinates (0-1) or null if outside image
  */
 function screenToPointerUV(clientX, clientY) {
-    if (!state.renderer || !state.mesh || !state.material) return null;
+    // The shader material's uniforms are read below (3DTV fit). After a failed
+    // context restore the material is a plain fallback without them, and the
+    // shader that draws the pointer is gone too: no pointer then.
+    if (!state.renderer || !state.mesh || !state.material?.uniforms) return null;
 
     const canvas = state.renderer.domElement;
     const rect = canvas.getBoundingClientRect();

@@ -136,6 +136,13 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'leaving the canvas hides the external pointer');
 
     const output = read('js/rendering/external-output.js');
+    ok(/return \{ output: null, failure: 'blocked' \};/.test(output) && /return \{ output: null, failure: 'webgl' \};/.test(output),
+        'opening tells a refused pop-up from a refused WebGL context');
+    const controller = read('js/ui/ui-external-output.js');
+    ok(/result\.failure === 'webgl'/.test(controller) && /externalOutput\.webglFailed/.test(controller),
+        'a refused WebGL context is not reported as a pop-up blocker');
+    ok(/if \(!state\.renderer \|\| !state\.mesh \|\| !state\.material\?\.uniforms\) return null;/.test(pointer),
+        'the pointer is not computed on the fallback material without uniforms');
     ok(/dst\.gridEnabled\.value = 0\.0;/.test(output), 'the grid is never drawn in the external window');
     ok(/externalPointer\(state\)/.test(output), 'the external window draws externalPointer');
 

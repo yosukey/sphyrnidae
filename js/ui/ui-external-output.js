@@ -39,8 +39,8 @@ const t = (key, fallback) => window.t?.(key) ?? fallback;
 function windowTexts() {
     return {
         title: t('externalOutput.windowTitle', 'Sphyrnidae — external output'),
-        hint: t('externalOutput.windowHint', 'Move this window to the stereo monitor, then click it or press Enter for full screen (Esc to leave). Operate from the original window.'),
-        hintNoFullscreen: t('externalOutput.windowHintNoFullscreen', 'Move this window to the stereo monitor and maximize it. Operate from the original window.'),
+        hint: t('externalOutput.windowHint', 'Move this window to the stereo display, then click it or press Enter for full screen (Esc to leave). Operate from the original window.'),
+        hintNoFullscreen: t('externalOutput.windowHintNoFullscreen', 'Move this window to the stereo display and maximize it. Operate from the original window.'),
     };
 }
 
@@ -99,7 +99,7 @@ export function openExternalOutput() {
     // VR draws with the page's renderer and owns the render loop.
     if (state.renderer?.xr?.enabled) return;
     let opened = null;
-    opened = ExternalOutput.open(window, windowTexts(), {
+    const result = ExternalOutput.open(window, windowTexts(), {
         closed: () => { if (opened) externalClosed(opened); },
         frames: () => framesChanged(),
         contextLost: () => {
@@ -108,8 +108,13 @@ export function openExternalOutput() {
             opened.close();
         },
     });
+    opened = result.output;
     if (!opened) {
-        showToast(t('externalOutput.blocked', 'Could not open the external window. Allow pop-ups for this site, then try again.'), 'warning');
+        if (result.failure === 'webgl') {
+            showToast(t('externalOutput.webglFailed', 'The external window could not start WebGL and was closed. Close other tabs or windows that use 3D, then try again.'), 'error');
+        } else {
+            showToast(t('externalOutput.blocked', 'Could not open the external window. Allow pop-ups for this site, then try again.'), 'warning');
+        }
         return;
     }
     output = opened;
@@ -122,7 +127,7 @@ export function openExternalOutput() {
     void opened.place().then((result) => {
         if (opened !== output) return;
         if (result === 'placed') {
-            showToast(t('externalOutput.placed', 'Moved the external window to the second monitor. Click it to go full screen.'), 'info');
+            showToast(t('externalOutput.placed', 'Moved the external window to the second display. Click it to go full screen.'), 'info');
         }
     }).catch(() => { /* stays where it opened */ });
 }

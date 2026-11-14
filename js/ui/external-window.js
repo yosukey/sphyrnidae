@@ -134,7 +134,13 @@ export class ExternalWindow {
         if (!ExternalWindow.reachable(win)) win = tryOpen(`${EXTERNAL_WINDOW_NAME}-${Date.now().toString(36)}`);
         if (!win || !ExternalWindow.reachable(win)) return null;
         try { win.focus(); } catch (e) { /* the browser keeps it where it is */ }
-        return new ExternalWindow(win, opener, texts, events);
+        try {
+            return new ExternalWindow(win, opener, texts, events);
+        } catch (e) {
+            // Its document would not take the contents: not left open, empty.
+            try { win.close(); } catch (_) { /* gone already */ }
+            return null;
+        }
     }
 
     static reachable(win) {
