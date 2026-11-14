@@ -146,8 +146,8 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'leaving the canvas hides the external pointer');
     ok(/if \(!state\.renderer \|\| !state\.mesh \|\| !state\.material\?\.uniforms\) return null;/.test(pointer),
         'the pointer is not computed on the fallback material without uniforms');
-    ok(/document\.addEventListener\('visibilitychange', \(?\(\) => \{ if \(!document\.hidden\) return; state\.pointerOverImage = false;/.test(pointer),
-        'the page going out of sight takes the pointer out of the external window');
+    ok(/document\.addEventListener\('visibilitychange', \(?\(\) => \{ if \(!document\.hidden \|\| !state\.externalOutputOpen\) return; state\.pointerOverImage = false;/.test(pointer),
+        'the page going out of sight takes the pointer out of the external window, and only while it is open');
 
     const output = code('js/rendering/external-output.js');
     const windowSrc = code('js/ui/external-window.js');
