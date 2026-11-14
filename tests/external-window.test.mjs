@@ -128,9 +128,10 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
 
 // --- Wiring checked in the source (these modules pull in three.js/WebGL) ----------
 // The release runs these tests on its built tree, where terser has stripped the
-// comments and re-printed the code (objects across lines, 0.0 as 0). So the source is
-// compared with its comments removed and every run of whitespace made one space, and
-// the patterns below are written for that form.
+// comments and re-printed the code (objects across lines, 0.0 as 0, an arrow function
+// argument wrapped in parentheses, { failure } as { failure: failure }). So the source
+// is compared with its comments removed and every run of whitespace made one space,
+// and the patterns below accept both forms.
 {
     const raw = (rel) => readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8');
     const code = (rel) => raw(rel)
@@ -145,10 +146,20 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'leaving the canvas hides the external pointer');
     ok(/if \(!state\.renderer \|\| !state\.mesh \|\| !state\.material\?\.uniforms\) return null;/.test(pointer),
         'the pointer is not computed on the fallback material without uniforms');
+    ok(/document\.addEventListener\('visibilitychange', \(?\(\) => \{ if \(!document\.hidden\) return; state\.pointerOverImage = false;/.test(pointer),
+        'the page going out of sight takes the pointer out of the external window');
 
     const output = code('js/rendering/external-output.js');
-    ok(/return \{ output: null, failure: 'blocked' \};/.test(output) && /return \{ output: null, failure: 'webgl' \};/.test(output),
-        'opening tells a refused pop-up from a refused WebGL context');
+    const windowSrc = code('js/ui/external-window.js');
+    ok(/return \{ window: null, failure: 'blocked' \};/.test(windowSrc) && /return \{ window: null, failure: 'unusable' \};/.test(windowSrc)
+        && /if \(!win\) return \{ output: null, failure(?:: failure)? \};/.test(output) && /return \{ output: null, failure: 'webgl' \};/.test(output),
+        'opening tells a refused pop-up from a window that would not take its contents and from a refused WebGL context');
+    ok(/if \(!ExternalWindow\.reachable\(win\)\) return unusable\(win\);/.test(windowSrc),
+        'a window opened just now that cannot be written into is closed, not left empty');
+    ok(/output\.draw\(\{ render: !output\.hidden\(\) \}\);/.test(code('js/ui/ui-external-output.js')),
+        'out of sight the external window is not drawn, but follows the page (no replaced image kept alive)');
+    ok(/if \(render\) this\.track\(\(?\(\) => this\.renderer\.render\(this\.scene, this\.camera\)\)?\); this\.pruneHooks\(\);/.test(output),
+        'dead dispose hooks are dropped whether or not a frame was drawn');
     ok(/if \(dst\.gridEnabled\) dst\.gridEnabled\.value = 0(?:\.0)?;/.test(output), 'the grid is never drawn in the external window');
     ok(/const p = externalPointer\(state\);/.test(output), 'the external window draws externalPointer');
     // Dispose hooks: dead entries go every frame, not only past a threshold.
@@ -159,8 +170,9 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'outside 3DTV the plane is framed by what the page shows');
 
     const controller = code('js/ui/ui-external-output.js');
-    ok(/result\.failure === 'webgl'/.test(controller) && /externalOutput\.webglFailed/.test(controller),
-        'a refused WebGL context is not reported as a pop-up blocker');
+    ok(/result\.failure === 'webgl'/.test(controller) && /externalOutput\.webglFailed/.test(controller)
+        && /result\.failure === 'unusable'/.test(controller) && /externalOutput\.unusable/.test(controller),
+        'neither a refused WebGL context nor an unusable window is reported as a pop-up blocker');
     ok(/window\.t\?\.\(key, \{ defaultValue: fallback \}\) \?\? fallback/.test(controller),
         'the English text is the defaultValue, so no raw key shows before i18next is ready');
     ok(/if \(isExternalOutputOpen\(\)\) \{ closeExternalOutput\(\); return; \} if \(output\) output\.close\(\); openExternalOutput\(\);/.test(controller),

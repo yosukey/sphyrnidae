@@ -76,6 +76,7 @@ const PRECACHE_URLS = [
   './js/core/export-params.js',
   './js/core/view-fit.js',
   './js/core/external-window-utils.js',
+  './js/core/frame-loop.js',
   // Rendering
   './js/rendering/renderer.js',
   './js/rendering/shaders.js',

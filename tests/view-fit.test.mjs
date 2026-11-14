@@ -119,9 +119,20 @@ function checkFraming(label, p, scale, panX, panY, page, ext) {
     ok(r.x0 >= -halfW - eps && r.x1 <= halfW + eps && r.y0 >= -halfH - eps && r.y1 <= halfH + eps,
         `${label}: everything the page shows is in the external view`);
     const share = Math.max((r.x1 - r.x0) / (2 * halfW), (r.y1 - r.y0) / (2 * halfH));
-    ok(near(share, 1, 1e-7), `${label}: as large as it fits (touches the view's edges in one direction)`);
+    // Never more magnified than the page: zoom relative to each view's own fit.
+    const zoomPage = zoomInView(p, mesh, 2 * FRUSTUM_H * (page.w / page.h) / 2, FRUSTUM_H);
+    const zoomExt = zoomInView(p, t, 2 * halfW, 2 * halfH);
+    const maxZoom = Math.max(zoomPage, 1);
+    ok(zoomExt <= maxZoom * (1 + 1e-9), `${label}: no more magnified than the page`);
+    ok(near(share, 1, 1e-7) || near(zoomExt, maxZoom, 1e-7),
+        `${label}: as large as it fits (touches the view's edges in one direction), or at the page's zoom`);
     ok(Math.abs((r.x0 + r.x1) / 2) < 1e-7 && Math.abs((r.y0 + r.y1) / 2) < 1e-7, `${label}: centred`);
-    return { mesh, t };
+    return { mesh, t, share, zoomExt, zoomPage };
+}
+// The image's zoom in a view of w x h world units, relative to its fit there.
+function zoomInView(p, t, w, h) {
+    const iw = Math.abs(p.geomW * t.scaleX), ih = Math.abs(p.geomH * t.scaleY);
+    return ih / Math.min(h, (w * ih) / iw);
 }
 const sameT = (a, b) => near(a.scaleX, b.scaleX) && near(a.scaleY, b.scaleY) && near(a.x, b.x) && near(a.y, b.y);
 
@@ -180,6 +191,26 @@ for (const [name, p] of [['16:9 image', { geomW: 10 * 16 / 9, geomH: 10, baseSca
     }
     ok(smooth, 'zooming in: no jump in the external view');
     ok(monotone, 'zooming in: the external view never zooms out');
+}
+
+// The image dragged towards a corner of the page at fit, until it leaves the view:
+// the external view never magnifies the sliver left on the page beyond the page's
+// own zoom (at fit: 1), and changes without jumps until the image is gone.
+{
+    const p = { geomW: 10 * 16 / 9, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: false };
+    const page = { w: 1920, h: 1080 };
+    const fit = fitScale(page.w, page.h, 10 * 16 / 9, 10, FRUSTUM_H);
+    let maxSeen = 0, prev = null, smooth = true;
+    for (let d = 0; d <= 1.0; d += 0.002) {
+        // From the centre to just short of off-screen, along the diagonal.
+        const panX = d * FRUSTUM_H * 16 / 9 * 0.999, panY = d * FRUSTUM_H * 0.999;
+        const c = checkFraming(`dragged to the corner (${d.toFixed(3)})`, p, fit, panX, panY, page, tvView);
+        maxSeen = Math.max(maxSeen, c.zoomExt);
+        if (prev && Math.abs(c.t.scaleY / prev.t.scaleY - 1) > 0.02) smooth = false;
+        prev = c;
+    }
+    ok(maxSeen <= 1 + 1e-9, `dragged to the corner: the external view stays at most at its fit (max ${maxSeen.toFixed(3)})`);
+    ok(smooth, 'dragged to the corner: no jump in the external view on the way');
 }
 
 // Nothing of the image on the page, or no usable page view: the whole image at fit.

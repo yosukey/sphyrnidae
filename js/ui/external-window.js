@@ -115,31 +115,40 @@ export class ExternalWindow {
 
     /**
      * Open the window, or find the one opened before under EXTERNAL_WINDOW_NAME.
-     * Call it straight from the click. Null when the browser refused (a popup
-     * blocker, or a browser with no windows to open).
+     * Call it straight from the click. On failure `window` is null and `failure`
+     * says why: 'blocked' — the browser refused to open one (a popup blocker, or a
+     * browser with no windows to open); 'unusable' — one opened, but its document
+     * would not take the contents, and it was closed again.
      * @param {Window} opener
      * @param {ExternalWindowTexts} texts
      * @param {ExternalWindowEvents} events
-     * @returns {ExternalWindow|null}
+     * @returns {{window: ExternalWindow|null, failure: null|'blocked'|'unusable'}}
      */
     static open(opener, texts, events) {
         const features = openingFeatures(opener);
         const tryOpen = (name) => {
             try { return opener.open('', name, features); } catch (e) { return null; }
         };
+        const unusable = (win) => {
+            try { win.close(); } catch (_) { /* gone already */ }
+            return { window: null, failure: 'unusable' };
+        };
         let win = tryOpen(EXTERNAL_WINDOW_NAME);
-        if (!win) return null;
-        // Under that name may be a window since gone to another site: not ours to
-        // write into. Leave it, and open a new one.
-        if (!ExternalWindow.reachable(win)) win = tryOpen(`${EXTERNAL_WINDOW_NAME}-${Date.now().toString(36)}`);
-        if (!win || !ExternalWindow.reachable(win)) return null;
+        if (!win) return { window: null, failure: 'blocked' };
+        if (!ExternalWindow.reachable(win)) {
+            // Under that name is a window since gone to another site: not ours to
+            // write into, nor to close. Leave it, and open a new one.
+            win = tryOpen(`${EXTERNAL_WINDOW_NAME}-${Date.now().toString(36)}`);
+            if (!win) return { window: null, failure: 'blocked' };
+            // Opened just now, and still not ours to write into: not left open, empty.
+            if (!ExternalWindow.reachable(win)) return unusable(win);
+        }
         try { win.focus(); } catch (e) { /* the browser keeps it where it is */ }
         try {
-            return new ExternalWindow(win, opener, texts, events);
+            return { window: new ExternalWindow(win, opener, texts, events), failure: null };
         } catch (e) {
             // Its document would not take the contents: not left open, empty.
-            try { win.close(); } catch (_) { /* gone already */ }
-            return null;
+            return unusable(win);
         }
     }
 

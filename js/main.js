@@ -22,6 +22,7 @@ import { initUpdateNotification } from './ui/ui-update-notification.js';
 import { initOfflineDetection, cleanupOfflineDetection } from './core/offlineDetection.js';
 import { showToast } from './ui/ui-toast.js';
 import { externalFrameSource, renderExternalOutput } from './ui/ui-external-output.js';
+import { FrameRequester, loopAction } from './core/frame-loop.js';
 import * as logger from './utils/logger.js';
 
 // Animation tracking variable for Wiggle mode
@@ -29,10 +30,11 @@ let lastWiggleTime = 0;
 
 // Power-saving mode: control animation loop when the tab is hidden
 let isAnimating = false;
-let animationFrameId = null;
-// The external window the pending frame was asked of (null: this page's window).
-// Its id has to be cancelled on the window that issued it.
-let animationFrameSource = null;
+// The pending animation frame: asked of the external output window while it is in
+// sight (its frames come at the stereo display's refresh and keep coming while this
+// page is out of sight, which gets none), otherwise of this page's window; cancelled
+// on whichever window issued it (core/frame-loop.js).
+const frames = new FrameRequester(window, externalFrameSource);
 
 /**
  * Whether there is anything in sight to draw for: this page, or the external
@@ -42,53 +44,40 @@ function shouldAnimate() {
     return !document.hidden || !!externalFrameSource();
 }
 
-/**
- * Ask for the next animation frame, of the external output window while it is in
- * sight (its frames come at the stereo monitor's refresh and keep coming while the
- * page is out of sight, which gets none), otherwise of this page's window.
- */
+/** Ask for the next animation frame, of the window in sight. */
 function requestNextFrame() {
-    const source = externalFrameSource();
-    if (source) {
-        animationFrameSource = source;
-        animationFrameId = source.requestFrame(animate);
-    } else {
-        animationFrameSource = null;
-        animationFrameId = requestAnimationFrame(animate);
-    }
+    frames.request(animate);
 }
 
 /** Cancel the pending animation frame, on whichever window it was asked of. */
 function cancelPendingFrame() {
-    if (animationFrameId !== null) {
-        if (animationFrameSource) {
-            animationFrameSource.cancelFrame(animationFrameId);
-        } else {
-            cancelAnimationFrame(animationFrameId);
-        }
-    }
-    animationFrameId = null;
-    animationFrameSource = null;
+    frames.cancel();
 }
 
 /**
  * Start, stop or re-aim the loop after the page or the external window came into
- * or went out of sight, or the external window opened or closed. A frame pending on
- * a window that went out of sight (or closed) would never come, so a running loop
- * asks again of the window in sight now. VR owns the loop while it is on.
+ * or went out of sight, or the external window opened or closed (loopAction).
  */
 function refreshAnimationLoop() {
-    if (state.renderer?.xr?.enabled) return;
-    if (!shouldAnimate()) {
-        stopAnimation();
-        return;
+    switch (loopAction({
+        xr: !!state.renderer?.xr?.enabled,
+        pageHidden: document.hidden,
+        externalInSight: !!externalFrameSource(),
+        animating: isAnimating
+    })) {
+        case 'stop':
+            stopAnimation();
+            break;
+        case 'start':
+            startAnimation();
+            break;
+        case 'reaim':
+            requestNextFrame();
+            break;
+        default:
+            // 'none': VR owns the loop.
+            break;
     }
-    if (!isAnimating) {
-        startAnimation();
-        return;
-    }
-    cancelPendingFrame();
-    requestNextFrame();
 }
 
 // Named handler for visibilitychange so it can be removed during cleanup

@@ -331,6 +331,18 @@ export function setupPointer3dControls(signal) {
     canvas.addEventListener('mouseenter', mouseEnterHandler, { signal });
     canvas.addEventListener('mouseleave', mouseLeaveHandler, { signal });
 
+    // The page out of sight (minimised, another tab): no one is pointing from it,
+    // and no mouseleave may come. Without this the pointer stood frozen in the
+    // external window, which goes on drawing. It comes back with the next mouse move.
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) return;
+        state.pointerOverImage = false;
+        if (state.pointer3dVisible) {
+            state.pointer3dVisible = false;
+            updateUniforms(true);
+        }
+    }, { signal });
+
     // Viewer mode toggle button
     const viewerBtn = document.getElementById('viewerPointer3dBtn');
     if (viewerBtn) {

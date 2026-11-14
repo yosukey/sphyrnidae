@@ -68,16 +68,17 @@ export class ExternalOutput {
      * Open the window and a renderer on its canvas. Call it straight from the
      * click (a popup blocker otherwise refuses). On failure `output` is null and
      * `failure` says why: 'blocked' — the browser refused the window (a popup
-     * blocker); 'webgl' — the window opened but WebGL refused a second context, and
-     * the window was closed again.
+     * blocker); 'unusable' — it opened but would not take its contents; 'webgl' —
+     * it opened but WebGL refused a second context. In the last two the window was
+     * closed again.
      * @param {Window} opener
      * @param {import('../ui/external-window.js').ExternalWindowTexts} texts
      * @param {ExternalOutputEvents} events
-     * @returns {{output: ExternalOutput|null, failure: null|'blocked'|'webgl'}}
+     * @returns {{output: ExternalOutput|null, failure: null|'blocked'|'unusable'|'webgl'}}
      */
     static open(opener, texts, events) {
         let out = null;
-        const win = ExternalWindow.open(opener, texts, {
+        const { window: win, failure } = ExternalWindow.open(opener, texts, {
             // Not passed on for a window that never got a renderer: nothing was
             // opened as far as the page knows.
             closed: () => { if (out) events.closed(); },
@@ -89,7 +90,7 @@ export class ExternalOutput {
                 events.frames?.();
             },
         });
-        if (!win) return { output: null, failure: 'blocked' };
+        if (!win) return { output: null, failure };
         try {
             out = new ExternalOutput(win, events);
         } catch (e) {
@@ -328,8 +329,17 @@ export class ExternalOutput {
         }
     }
 
-    /** One frame: the page's image as it is now, at this window's size. */
-    draw() {
+    /**
+     * One frame: the page's image as it is now, at this window's size.
+     *
+     * With `render: false` — the window out of sight — nothing is drawn, but what it
+     * holds is brought up to date all the same: this window's material, its uniforms
+     * and the plane follow the page's current ones, so an image the page has since
+     * replaced (its texture, and through it the decoded picture) is not kept alive
+     * here until the window is looked at again.
+     * @param {{render?: boolean}} [options]
+     */
+    draw({ render = true } = {}) {
         if (this.closed) return;
         this.applySize();
         this.matchClear();
@@ -338,10 +348,21 @@ export class ExternalOutput {
         if (page && src && page.geometry?.parameters) {
             this.syncMaterial(src);
             this.syncMesh();
-        } else if (this.mesh) {
-            this.mesh.visible = false;
+        } else {
+            // Nothing to show: let go of the last image's plane and material too
+            // (built again with the next image).
+            if (this.mesh) {
+                this.scene.remove(this.mesh);
+                this.mesh = null;
+            }
+            if (this.material) {
+                this.material.dispose();
+                this.material = null;
+                this.source = null;
+            }
         }
-        this.track(() => this.renderer.render(this.scene, this.camera));
+        if (render) this.track(() => this.renderer.render(this.scene, this.camera));
+        this.pruneHooks();
     }
 
     /**
@@ -363,11 +384,17 @@ export class ExternalOutput {
         } finally {
             proto.addEventListener = add;
         }
-        // Objects the page disposed (an old image's texture, a redrawn text overlay's
-        // canvas) leave entries behind whose listener three has already taken off.
-        // Let them go at once: an entry holds its texture, and through it the decoded
-        // image, which would otherwise stay in memory while this window is open. The
-        // list is a handful of entries, compacted in place.
+    }
+
+    /**
+     * Objects the page disposed (an old image's texture, a redrawn text overlay's
+     * canvas) leave entries in disposeHooks whose listener three has already taken
+     * off. Let them go at once: an entry holds its texture, and through it the decoded
+     * image, which would otherwise stay in memory while this window is open. The list
+     * is a handful of entries, compacted in place.
+     */
+    pruneHooks() {
+        const hooks = this.disposeHooks;
         let kept = 0;
         for (let i = 0; i < hooks.length; i++) {
             const entry = hooks[i];

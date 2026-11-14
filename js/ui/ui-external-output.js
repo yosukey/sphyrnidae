@@ -72,15 +72,15 @@ export function externalFrameSource() {
  * Draw the external window's frame. Called by the render loop after the page's.
  * Skipped while an export holds the render state (state.externalOutputHold): the
  * window keeps its last frame rather than flash the export's temporary state.
- * Skipped too while the window is out of sight.
+ * Not drawn while the window is out of sight.
  */
 export function renderExternalOutput() {
     if (!output || output.closed || state.externalOutputHold) return;
-    // Out of sight (minimised or covered): nothing to show; it draws again on its
-    // next frame once it is back in sight.
-    if (output.hidden()) return;
     try {
-        output.draw();
+        // Out of sight (minimised or covered): nothing is drawn, but what it holds
+        // follows the page, so a replaced image is not kept alive there. It draws
+        // again on its next frame once it is back in sight.
+        output.draw({ render: !output.hidden() });
         drawErrors = 0;
     } catch (err) {
         drawErrors++;
@@ -114,6 +114,8 @@ export function openExternalOutput() {
     if (!opened) {
         if (result.failure === 'webgl') {
             showToast(t('externalOutput.webglFailed', 'The external window could not start WebGL and was closed. Close other tabs or windows that use 3D, then try again.'), 'error');
+        } else if (result.failure === 'unusable') {
+            showToast(t('externalOutput.unusable', 'The external window could not be prepared and was closed. Try again.'), 'error');
         } else {
             showToast(t('externalOutput.blocked', 'Could not open the external window. Allow pop-ups for this site, then try again.'), 'warning');
         }

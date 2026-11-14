@@ -80,6 +80,12 @@ export function meshTransform({ viewW, viewH, frustumH, geomW, geomH, baseScaleX
  * - None of the image on the page (panned out of view), or no usable page view: the
  *   whole image at fit.
  *
+ * It never magnifies more than the page does: its zoom relative to its own fit stays
+ * at most the page's zoom relative to the page's fit (or 1, at fit). That bound is
+ * never reached in the cases above; it holds back the image dragged to a corner of the
+ * page, where only a sliver of it shows and fitting that sliver would magnify it a
+ * hundredfold. There the sliver is shown at the page's zoom, centred.
+ *
  * The plane is the page's plane scaled by one factor about the visible part's centre,
  * so its aspect, and every image point's place relative to the others, are kept.
  *
@@ -107,7 +113,19 @@ export function externalFraming({ mesh, geomW, geomH, view, viewW, viewH, frustu
         y0 = mesh.y - halfH;
         y1 = mesh.y + halfH;
     }
-    const k = Math.min((frustumH * (viewW / viewH)) / (x1 - x0), frustumH / (y1 - y0));
+    const otherW = frustumH * (viewW / viewH);
+    // The image's height at fit in a view of w x h (world units): the image contained.
+    const imageW = 2 * halfW;
+    const imageH = 2 * halfH;
+    const fitHeight = (w, h) => Math.min(h, (w * imageH) / imageW);
+    // The page's zoom relative to its own fit; 1 when the page's view is not usable.
+    const pageZoom = imageH / fitHeight(view.right - view.left, view.top - view.bottom);
+    const maxZoom = Math.max(Number.isFinite(pageZoom) ? pageZoom : 1, 1);
+    const k = Math.min(
+        otherW / (x1 - x0),
+        frustumH / (y1 - y0),
+        (maxZoom * fitHeight(otherW, frustumH)) / imageH
+    );
     const cx = (x0 + x1) / 2;
     const cy = (y0 + y1) / 2;
     return { scaleX: mesh.scaleX * k, scaleY: mesh.scaleY * k, x: (mesh.x - cx) * k, y: (mesh.y - cy) * k };

@@ -235,7 +235,9 @@ operating. Press the same button again, or close the window, to end it.
   fit, or zoomed out), the external window shows it at its own fit, so opening or
   closing panels here does not move it. Zoomed in, it shows the part visible
   here (and more around it where the aspect ratios differ), so whatever you point
-  at is always in view. Viewer-mode zoom and 3DTV are mirrored as they are.
+  at is always in view. It never magnifies more than this window does, so an
+  image dragged mostly out of view is not blown up. Viewer-mode zoom and 3DTV
+  are mirrored as they are.
 - **The pointer**: the mouse over the image is shown there too. With the 3D
   pointer on (`D`), it is drawn exactly as on the page, at its depth; otherwise
   as a flat arrow at screen depth.
