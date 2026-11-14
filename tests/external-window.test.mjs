@@ -143,6 +143,14 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
         'a refused WebGL context is not reported as a pop-up blocker');
     ok(/if \(!state\.renderer \|\| !state\.mesh \|\| !state\.material\?\.uniforms\) return null;/.test(pointer),
         'the pointer is not computed on the fallback material without uniforms');
+    ok(/window\.t\?\.\(key, \{ defaultValue: fallback \}\)/.test(controller),
+        'the English text is the defaultValue, so no raw key shows before i18next is ready');
+    ok(/if \(isExternalOutputOpen\(\)\) \{\s*closeExternalOutput\(\);/.test(controller) && /if \(output\) output\.close\(\);\s*openExternalOutput\(\);/.test(controller),
+        'a window closed by hand and not yet noticed does not swallow the next click');
+    // Dispose hooks: dead entries go every frame, not only past a threshold.
+    const trackBody = output.slice(output.indexOf('    track(drawing) {'), output.indexOf('    release() {'));
+    ok(!/prunedAt/.test(output) && /hooks\.length = kept;/.test(trackBody),
+        'entries for objects the page disposed are dropped on every draw');
     ok(/dst\.gridEnabled\.value = 0\.0;/.test(output), 'the grid is never drawn in the external window');
     ok(/externalPointer\(state\)/.test(output), 'the external window draws externalPointer');
 
@@ -150,6 +158,11 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     const closeAt = vr.indexOf('closeExternalOutput();');
     const requestAt = vr.indexOf("navigator.xr.requestSession('immersive-vr'");
     ok(closeAt > 0 && requestAt > closeAt, 'entering VR closes the external window first');
+
+    const started = vr.slice(vr.indexOf('async function onSessionStarted'));
+    ok(started.indexOf('closeExternalOutput();') > 0
+        && started.indexOf('closeExternalOutput();') < started.indexOf('state.renderer.xr.enabled = true;'),
+        'a window opened while the VR session was starting is closed when it starts');
 
     const ui = read('js/ui/ui.js');
     ok(/setupExternalOutputControls\(signal\);/.test(ui), 'ui.js wires the external output buttons');

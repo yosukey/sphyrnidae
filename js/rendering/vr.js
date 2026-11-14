@@ -324,6 +324,11 @@ async function onSessionStarted(session) {
     // Event listener for session end
     session.addEventListener('end', onSessionEnded);
 
+    // Closed again here: the session takes a while to start after the click
+    // (the headset prompt), and the external window can be opened meanwhile from
+    // the viewer bar. Once XR is on, it would stand frozen until VR ends.
+    closeExternalOutput();
+
     try {
         // Start VR render loop (set before xr.enabled=true)
         state.renderer.xr.enabled = true;

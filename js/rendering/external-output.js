@@ -124,8 +124,6 @@ export class ExternalOutput {
          * as long as the object lives.
          */
         this.disposeHooks = [];
-        /** How many hooks there were after the last pruning: prune again at twice that. */
-        this.prunedAt = 64;
         this.renderer = null;
         this.makeRenderer();
     }
@@ -351,12 +349,17 @@ export class ExternalOutput {
         } finally {
             proto.addEventListener = add;
         }
-        // Objects disposed by the page (an old image's texture) leave hooks behind
-        // that three has already taken off: let them go now and then.
-        if (hooks.length > this.prunedAt) {
-            this.disposeHooks = hooks.filter(([target, listener]) => target.hasEventListener('dispose', listener));
-            this.prunedAt = Math.max(64, this.disposeHooks.length * 2);
+        // Objects the page disposed (an old image's texture, a redrawn text overlay's
+        // canvas) leave entries behind whose listener three has already taken off.
+        // Let them go at once: an entry holds its texture, and through it the decoded
+        // image, which would otherwise stay in memory while this window is open. The
+        // list is a handful of entries, compacted in place.
+        let kept = 0;
+        for (let i = 0; i < hooks.length; i++) {
+            const entry = hooks[i];
+            if (entry[0].hasEventListener('dispose', entry[1])) hooks[kept++] = entry;
         }
+        hooks.length = kept;
     }
 
     release() {

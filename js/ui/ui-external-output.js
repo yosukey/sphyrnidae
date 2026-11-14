@@ -34,7 +34,9 @@ const MAX_DRAW_ERRORS = 10;
  */
 export const externalOutputOffered = typeof navigator !== 'undefined' && externalWindowOffered(navigator);
 
-const t = (key, fallback) => window.t?.(key) ?? fallback;
+// window.t returns the key itself until i18next is ready (or if it never loads), so
+// the English text goes in as its defaultValue rather than only after `??`.
+const t = (key, fallback) => window.t?.(key, { defaultValue: fallback }) ?? fallback;
 
 function windowTexts() {
     return {
@@ -139,8 +141,15 @@ export function closeExternalOutput() {
 
 /** The buttons: open the external window, or close it. */
 export function toggleExternalOutput() {
-    if (output) closeExternalOutput();
-    else openExternalOutput();
+    if (isExternalOutputOpen()) {
+        closeExternalOutput();
+        return;
+    }
+    // Closed by hand a moment ago and not yet noticed (the window is looked at every
+    // 250 ms): let it go now, so this click opens a new one rather than closing a
+    // window that is already gone. Synchronous, so the click still opens the popup.
+    if (output) output.close();
+    openExternalOutput();
 }
 
 function externalClosed(closed) {
