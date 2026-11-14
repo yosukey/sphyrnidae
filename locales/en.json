@@ -514,6 +514,7 @@
   "externalOutput": {
     "open": "Output to external window",
     "close": "Close external window",
+    "button": "External output window",
     "description": "Show only the image and the pointer in a separate window, for a stereo display. This window stays as it is, for operating.",
     "windowTitle": "Sphyrnidae — external output",
     "windowHint": "Move this window to the stereo display, then click it or press Enter for full screen (Esc to leave). Operate from the original window.",
@@ -529,7 +530,7 @@
     "helpToggleDesc": "Open or close a window that shows only the image and the pointer",
     "helpFullscreenKey": "Click / Enter",
     "helpFullscreenDesc": "In the external window: full screen (Esc to leave)",
-    "helpNote": "Note: for a stereo display beside this one. The mouse over the image is shown there; with the 3D pointer off, at screen depth. Not available on phones and tablets.",
+    "helpNote": "Note: for a stereo display beside this one. The mouse over the image is shown there; with the 3D pointer off, at screen depth. Not available on iPhone, iPad or Android, where a pop-up would cover this page.",
     "helpViewerDesc": "Show only the image and the pointer in a separate window, for a stereo display"
   }
 }

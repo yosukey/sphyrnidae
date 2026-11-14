@@ -30,19 +30,36 @@ let lastWiggleTime = 0;
 
 // Power-saving mode: control animation loop when the tab is hidden
 let isAnimating = false;
+
+/** This page's own frames, as a frame source (core/frame-loop.js). */
+const pageFrames = {
+    request: (callback) => requestAnimationFrame(callback),
+    cancel: (id) => cancelAnimationFrame(id)
+};
+
 /**
  * The external window to ask frames of instead of this page's: only while this page
  * is out of sight (minimised or covered), which the browser gives no frames, and the
  * external window is open and in sight. While this page is in sight its own frames
- * drive the loop, so it never waits on another window's.
+ * drive the loop. (Either going quiet without saying so is covered by the timer that
+ * stands by with each request — core/frame-loop.js.)
  */
 function externalFramesWhilePageHidden() {
-    return document.hidden ? externalFrameSource() : null;
+    if (!document.hidden) return null;
+    const external = externalFrameSource();
+    if (!external) return null;
+    return {
+        request: (callback) => external.requestFrame(callback),
+        cancel: (id) => external.cancelFrame(id)
+    };
 }
 
-// The pending animation frame, cancelled on whichever window issued it
-// (core/frame-loop.js).
-const frames = new FrameRequester(window, externalFramesWhilePageHidden);
+// The pending animation frame, cancelled on whichever window issued it. While the
+// external window is in sight a timer stands by with each request, so a window that
+// stops giving frames without saying so does not freeze it; the page alone has none.
+const frames = new FrameRequester(pageFrames, externalFramesWhilePageHidden, {
+    standBy: () => !!externalFrameSource()
+});
 
 /**
  * Whether there is anything in sight to draw for: this page, or the external

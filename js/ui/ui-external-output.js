@@ -30,9 +30,12 @@ const MAX_DRAW_ERRORS = 10;
 
 /**
  * Whether this browser is offered the external window: not on an iPhone, an iPad
- * or Android, where a popup opens as a tab in front of the page (externalWindowOffered).
+ * or Android (an Android tablet asking for desktop sites included), where a popup
+ * opens as a tab in front of the page (externalWindowOffered).
  */
-export const externalOutputOffered = typeof navigator !== 'undefined' && externalWindowOffered(navigator);
+export const externalOutputOffered = typeof navigator !== 'undefined' && externalWindowOffered(navigator, {
+    finePointer: typeof matchMedia === 'function' ? matchMedia('(any-pointer: fine)').matches : undefined
+});
 
 // window.t returns the key itself until i18next is ready (or if it never loads), so
 // the English text goes in as its defaultValue rather than only after `??`.
@@ -76,6 +79,12 @@ export function externalFrameSource() {
  */
 export function renderExternalOutput() {
     if (!output || output.closed || state.externalOutputHold) return;
+    // Gone to another site (navigated away): not ours to draw into. Closed now,
+    // rather than failing to draw until the next check notices.
+    if (output.foreign()) {
+        output.close();
+        return;
+    }
     try {
         // Out of sight (minimised or covered): nothing is drawn, but what it holds
         // follows the page, so a replaced image is not kept alive there. It draws
@@ -165,7 +174,12 @@ function externalClosed(closed) {
     logger.info('ExternalOutput', 'External window closed');
 }
 
-/** Bring the buttons (menu and viewer bar) in line with whether the window is open. */
+/**
+ * Bring the buttons in line with whether the window is open. The menu button says
+ * what it will do (open / close), so it is a plain button; the viewer bar's ⧉ keeps
+ * its name (data-i18n, "External output window") and is a toggle, pressed while the
+ * window is open, as the bar's other toggles (⊹, L⟷R).
+ */
 export function updateExternalOutputButtons() {
     const open = isExternalOutputOpen();
     const menuBtn = document.getElementById('externalOutputBtn');
@@ -174,7 +188,6 @@ export function updateExternalOutputButtons() {
             ? t('externalOutput.close', 'Close external window')
             : t('externalOutput.open', 'Output to external window');
         menuBtn.classList.toggle('active', open);
-        menuBtn.setAttribute('aria-pressed', String(open));
     }
     const viewerBtn = document.getElementById('viewerExternalOutputBtn');
     if (viewerBtn) {
@@ -186,11 +199,6 @@ export function updateExternalOutputButtons() {
             viewerBtn.style.color = '';
         }
         viewerBtn.setAttribute('aria-pressed', String(open));
-        const title = open
-            ? t('externalOutput.close', 'Close external window')
-            : t('externalOutput.open', 'Output to external window');
-        viewerBtn.title = title;
-        viewerBtn.setAttribute('aria-label', title);
     }
 }
 

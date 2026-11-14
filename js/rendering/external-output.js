@@ -8,8 +8,9 @@
  * and textures, through a ShaderMaterial of its own built from the page's shader.
  * Every frame it copies the page's uniforms — parallax, alignment, crop, colour,
  * the text overlay, wiggle, viewer zoom and pan, 3DTV — so everything the page
- * changes shows here too; nothing else is kept in step. What differs per window is
- * set here:
+ * changes shows here too. Nothing is sent over or kept in step any other way: the
+ * uniforms, the background and the plane's framing are read from the page every
+ * frame. What differs per window is set here:
  *
  * - resolution, pixelRatio and the interlace row parity: this canvas's own;
  * - the grid: never drawn here (it is an on-screen aid for the page);
@@ -58,8 +59,8 @@ function copiable(value) {
 /**
  * @typedef {Object} ExternalOutputEvents
  * @property {() => void} closed - the window is gone; release what draws into it (dispose)
- * @property {() => void} [frames] - frames should be asked of another window now
- *   (the window came into or went out of sight, or its document was replaced)
+ * @property {() => void} [frames] - the window came into or went out of sight, or its
+ *   document was replaced: which window the loop asks frames of may change
  * @property {() => void} [contextLost] - this window's WebGL context was lost
  */
 
@@ -165,6 +166,11 @@ export class ExternalOutput {
     /** Out of sight, so frames asked of its window would wait. */
     hidden() {
         return this.window.hidden();
+    }
+
+    /** Gone to another site: not ours to draw into any more. */
+    foreign() {
+        return this.window.foreign();
     }
 
     /** Move it onto the other monitor, where the browser can. */
@@ -335,8 +341,8 @@ export class ExternalOutput {
     /**
      * One frame: the page's image as it is now, at this window's size.
      *
-     * With `render: false` — the window out of sight — nothing is drawn, but what it
-     * holds is brought up to date all the same: this window's material, its uniforms
+     * With `render: false` — the window out of sight, or a new image followed between
+     * frames — nothing is drawn, but what it holds is brought up to date all the same: this window's material, its uniforms
      * and the plane follow the page's current ones, so an image the page has since
      * replaced (its texture, and through it the decoded picture) is not kept alive
      * here until the window is looked at again.
@@ -353,17 +359,19 @@ export class ExternalOutput {
             this.syncMesh();
         } else {
             // Nothing to show: let go of the last image's plane and material too
-            // (built again with the next image).
-            if (this.mesh) {
-                this.scene.remove(this.mesh);
-                this.mesh = null;
+            // (built again with the next image), once.
+            if (this.mesh || this.material) {
+                if (this.mesh) {
+                    this.scene.remove(this.mesh);
+                    this.mesh = null;
+                }
+                if (this.material) {
+                    this.material.dispose();
+                    this.material = null;
+                    this.source = null;
+                }
+                this.forgetLastRender();
             }
-            if (this.material) {
-                this.material.dispose();
-                this.material = null;
-                this.source = null;
-            }
-            this.forgetLastRender();
         }
         if (render) this.track(() => this.renderer.render(this.scene, this.camera));
         this.pruneHooks();

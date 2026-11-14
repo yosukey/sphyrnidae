@@ -247,9 +247,11 @@ operating. Press the same button again, or close the window, to end it.
   this site.
 - **Full screen**: click the external window, or press Enter there (Esc leaves
   it). Side-by-side input needs full screen; for interlace, use full screen so
-  that the rows line up with the display's.
+  that the rows (for vertical interlace, the columns) line up with the
+  display's.
 - It keeps drawing while this window is minimized. Entering VR closes it. It is
-  not offered on phones and tablets, where a pop-up would cover the page.
+  not offered on iPhone, iPad or Android, where a pop-up opens as a tab over the
+  page.
 - The image is uploaded to the GPU once more for the second window, so very
   large images use twice the GPU memory.
 

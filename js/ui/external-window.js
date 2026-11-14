@@ -33,10 +33,10 @@ import { requestFullscreenCompat } from './ui-fullscreen.js';
 import { safeLocalStorageGet, safeLocalStorageSet } from '../utils/safe-storage.js';
 
 /**
- * The window's name: opened again from this page, the same window is reused, where
- * it was left. It is this page's own (a random part per page load), so another tab
- * of the app in the same browsing context group cannot find the window by name and
- * take it over, the two rebuilding it in turn.
+ * The window's name, this page's own (a random part per page load): another tab of
+ * the app in the same browsing context group cannot find the window by name and
+ * take it over, the two rebuilding it in turn. Every way the output ends closes the
+ * window, so each opening is a new one.
  */
 export const EXTERNAL_WINDOW_NAME = `sphyrnidae-stereo-output-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -119,8 +119,7 @@ export class ExternalWindow {
     }
 
     /**
-     * Open the window, or find the one opened before under EXTERNAL_WINDOW_NAME.
-     * Call it straight from the click. On failure `window` is null and `failure`
+     * Open the window. Call it straight from the click. On failure `window` is null and `failure`
      * says why: 'blocked' — the browser refused to open one (a popup blocker, or a
      * browser with no windows to open); 'unusable' — one opened, but its document
      * would not take the contents, and it was closed again.
@@ -138,16 +137,12 @@ export class ExternalWindow {
             try { win.close(); } catch (_) { /* gone already */ }
             return { window: null, failure: 'unusable' };
         };
-        let win = tryOpen(EXTERNAL_WINDOW_NAME);
+        const win = tryOpen(EXTERNAL_WINDOW_NAME);
         if (!win) return { window: null, failure: 'blocked' };
-        if (!ExternalWindow.reachable(win)) {
-            // Under that name is a window since gone to another site: not ours to
-            // write into, nor to close. Leave it, and open a new one.
-            win = tryOpen(`${EXTERNAL_WINDOW_NAME}-${Date.now().toString(36)}`);
-            if (!win) return { window: null, failure: 'blocked' };
-            // Opened just now, and still not ours to write into: not left open, empty.
-            if (!ExternalWindow.reachable(win)) return unusable(win);
-        }
+        // Not to be written into: not left open, empty. (The name is this page's own,
+        // so a window under it is one this page opened; gone to another site, check()
+        // closes it as well.)
+        if (!ExternalWindow.reachable(win)) return unusable(win);
         try { win.focus(); } catch (e) { /* the browser keeps it where it is */ }
         try {
             return { window: new ExternalWindow(win, opener, texts, events), failure: null };
@@ -161,14 +156,19 @@ export class ExternalWindow {
         try { return !!win.document && !!win.document.body && !!win.document.head; } catch (e) { return false; }
     }
 
+    /** Whether the window has gone to another site: its document no longer ours to reach. */
+    foreign() {
+        try { void this.win.document; return false; } catch (e) { return true; }
+    }
+
     /**
      * Put the window's contents into its document — the canvas and the note — and
      * listen to it. Again, all new, if the document is replaced (check).
      */
     build() {
         const doc = this.win.document;
-        // A window reused under the same name still holds what the last page put
-        // there — a canvas whose context went with that page.
+        // Whatever the document holds already goes: a document replaced under the
+        // window (check) may come with contents of its own.
         for (const n of [...doc.head.childNodes]) n.remove();
         for (const n of [...doc.body.childNodes]) n.remove();
         doc.body.className = '';
@@ -266,6 +266,8 @@ export class ExternalWindow {
     renderTexts() {
         const doc = this.win.document;
         doc.title = this.texts.title;
+        // The page's language, so the note is read out in it.
+        try { doc.documentElement.lang = this.opener.document.documentElement.lang || ''; } catch (e) { /* left as is */ }
         const canFullscreen = fullscreenSupported(doc, doc.documentElement);
         const head = doc.createElement('b');
         head.textContent = this.texts.title;

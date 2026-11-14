@@ -83,6 +83,17 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     ok(externalWindowOffered({ userAgent: UA.linux, platform: 'Linux x86_64', maxTouchPoints: 0 }), 'on Linux');
     ok(externalWindowOffered({ userAgent: UA.chromeOs, platform: 'Linux x86_64', maxTouchPoints: 10 }), 'on ChromeOS');
     ok(externalWindowOffered({}), 'when nothing is known');
+    // An Android tablet asking for the desktop site calls itself Linux: a touch screen and no fine pointer.
+    ok(!externalWindowOffered({ userAgent: UA.linux, platform: 'Linux x86_64', maxTouchPoints: 10 }, { finePointer: false }),
+        'not on an Android tablet asking for the desktop site (Linux, touch, no fine pointer)');
+    ok(externalWindowOffered({ userAgent: UA.linux, platform: 'Linux x86_64', maxTouchPoints: 10 }, { finePointer: true }),
+        'on a Linux computer with a touch screen and a mouse or touchpad');
+    ok(externalWindowOffered({ userAgent: UA.linux, platform: 'Linux x86_64', maxTouchPoints: 0 }, { finePointer: false }),
+        'on a Linux computer without touch, whatever the pointer');
+    ok(externalWindowOffered({ userAgent: UA.chromeOs, platform: 'Linux x86_64', maxTouchPoints: 10 }, { finePointer: false }),
+        'on a ChromeOS tablet (real windows)');
+    ok(externalWindowOffered({ userAgent: UA.windowsChrome, platform: 'Win32', maxTouchPoints: 10 }, { finePointer: false }),
+        'on a Windows tablet (real windows)');
 }
 
 // --- Fullscreen on a given document ---------------------------------------------
@@ -201,14 +212,28 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     ok(/addEventListener\('external-output-frames', refreshAnimationLoop\)/.test(main),
         'the render loop re-aims its frames when the external window opens, closes or changes sight');
 
+    ok(/if \(output\.foreign\(\)\) \{ output\.close\(\); return; \}/.test(controller),
+        'a window gone to another site is closed at once, not drawn into');
+    ok(/if \(this\.mesh \|\| this\.material\) \{/.test(output),
+        'with no image, the plane and material are let go once, not every frame');
+    ok(/doc\.documentElement\.lang = this\.opener\.document\.documentElement\.lang/.test(windowSrc),
+        'the window\'s document is in the page\'s language');
+    ok(!/aria-pressed/.test(controller.slice(controller.indexOf('const menuBtn'), controller.indexOf('const viewerBtn'))),
+        'the menu button, whose label says what it does, is not also a toggle');
+    ok(/viewerBtn\.setAttribute\('aria-pressed', String\(open\)\)/.test(controller) && !/viewerBtn\.(title|setAttribute\('aria-label')/.test(controller),
+        'the viewer bar button keeps its name and toggles aria-pressed');
+
     const html = raw('index.html');
+    ok(!/id="externalOutputBtn"[^>]*aria-pressed/.test(html), 'the menu button carries no aria-pressed');
+    ok(/id="viewerExternalOutputBtn"[^>]*data-i18n="\[aria-label\]externalOutput\.button"[^>]*aria-pressed="false"/.test(html),
+        'the viewer bar button\'s accessible name is translated, and it starts not pressed');
     ok(/id="externalOutputGroup"[^>]*class="[^"]*\bhidden\b|class="[^"]*\bhidden\b[^"]*" id="externalOutputGroup"/.test(html),
         'the menu button starts hidden (shown only where offered)');
     ok(/id="viewerExternalOutputBtn" class="[^"]*\bhidden\b/.test(html), 'the viewer button starts hidden');
 
     // Every externalOutput.* key the page and the module use exists in each locale.
     const used = new Set([
-        ...[...html.matchAll(/data-i18n(?:-title)?="externalOutput\.(\w+)"/g)].map(m => m[1]),
+        ...[...html.matchAll(/data-i18n(?:-title)?="(?:\[[\w-]+\])?externalOutput\.(\w+)"/g)].map(m => m[1]),
         ...[...controller.matchAll(/t\('externalOutput\.(\w+)'/g)].map(m => m[1]),
     ]);
     ok(used.size >= 10, 'found the externalOutput keys in use');

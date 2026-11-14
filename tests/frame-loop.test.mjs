@@ -4,20 +4,22 @@
  * Which window the render loop asks its frames of (js/core/frame-loop.js), and that
  * the loop built on it in main.js never runs two frame chains, never dies while
  * something is in sight, runs on the page's own frames while the page is in sight,
- * and stops when nothing is.
+ * keeps the external window going when the window asked goes quiet without saying
+ * so, and stops when nothing is in sight. Without the external window no timer is
+ * used, so the page alone behaves as before.
  *
  * main.js itself pulls in three.js/WebGL, so the loop is modelled here exactly as
  * main.js drives it (animate / startAnimation / stopAnimation / refreshAnimationLoop),
- * over fake windows that deliver frames only while they are in sight and drop the
- * pending ones when they close, as browsers do. A check of main.js's source ties the
- * model to the real code.
+ * over fake windows that deliver frames only while they are in sight (and, when
+ * stalled, not even then) and drop the pending ones when they close, and fake timers.
+ * A check of main.js's source ties the model to the real code.
  *
  * Run:  node tests/frame-loop.test.mjs
  */
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { FrameRequester, loopAction } from '../js/core/frame-loop.js';
+import { FrameRequester, loopAction, STALL_MS } from '../js/core/frame-loop.js';
 
 let pass = 0, fail = 0;
 const ok = (cond, msg) => { if (cond) { pass++; } else { fail++; console.error('  FAIL:', msg); } };
@@ -37,46 +39,79 @@ for (const xr of [false, true]) {
     }
 }
 
-// --- Fake windows -------------------------------------------------------------------
+// --- Fakes --------------------------------------------------------------------------
 class FakeWindow {
     constructor(name) { this.name = name; this.pending = new Map(); this.nextId = 1; this.cancelled = []; }
-    requestAnimationFrame(cb) { const id = this.nextId++; this.pending.set(id, cb); return id; }
-    cancelAnimationFrame(id) { this.cancelled.push(id); this.pending.delete(id); }
-    // The external window's names for the same (ExternalWindow.requestFrame / cancelFrame).
-    requestFrame(cb) { return this.requestAnimationFrame(cb); }
-    cancelFrame(id) { this.cancelAnimationFrame(id); }
+    request(cb) { const id = this.nextId++; this.pending.set(id, cb); return id; }
+    cancel(id) { this.cancelled.push(id); this.pending.delete(id); }
     /** Deliver the frames due, as a browser does for a window in sight. */
-    fire() { const due = [...this.pending.values()]; this.pending.clear(); for (const cb of due) cb(); }
+    fire() { const due = [...this.pending.values()]; this.pending.clear(); for (const cb of due) cb(16); }
+}
+class FakeTimers {
+    constructor() { this.now = 0; this.list = new Map(); this.nextId = 1; }
+    setTimeout(fn, ms) { const id = this.nextId++; this.list.set(id, { fn, due: this.now + ms }); return id; }
+    clearTimeout(id) { this.list.delete(id); }
+    advance(ms) {
+        const end = this.now + ms;
+        for (;;) {
+            let next = null;
+            for (const [id, t] of this.list) if (t.due <= end && (!next || t.due < next[1].due)) next = [id, t];
+            if (!next) break;
+            this.list.delete(next[0]);
+            this.now = next[1].due;
+            next[1].fn();
+        }
+        this.now = end;
+    }
 }
 
 // --- FrameRequester -----------------------------------------------------------------
 {
-    const page = new FakeWindow('page'), ext = new FakeWindow('ext');
-    let source = null;
-    const frames = new FrameRequester(page, () => source);
-    frames.request(() => {});
-    ok(page.pending.size === 1 && ext.pending.size === 0 && frames.pending, 'no external window: the page is asked');
-    source = ext;
-    frames.request(() => {});
-    ok(page.pending.size === 0 && ext.pending.size === 1, 'external window in sight: it is asked, the page\'s frame cancelled');
-    source = null; // the external window went out of sight (or closed) meanwhile
+    const page = new FakeWindow('page'), ext = new FakeWindow('ext'), timers = new FakeTimers();
+    let source = null, standBy = false, runs = 0;
+    const frames = new FrameRequester(page, () => source, { timers, standBy: () => standBy, stallMs: STALL_MS });
+    frames.request(() => runs++);
+    ok(page.pending.size === 1 && timers.list.size === 0 && frames.pending, 'no other window: the page is asked, with no timer');
+    timers.advance(STALL_MS * 4);
+    ok(runs === 0 && page.pending.size === 1, 'without a timer, a quiet page just waits (as before)');
+    source = ext; standBy = true;
+    frames.request(() => runs++);
+    ok(page.pending.size === 0 && ext.pending.size === 1 && timers.list.size === 1, 'another window named: it is asked, the page\'s frame cancelled, a timer stands by');
+    ext.fire();
+    ok(runs === 1 && timers.list.size === 0 && !frames.pending, 'the frame comes: run once, the timer cleared');
+    frames.request(() => runs++);
+    timers.advance(STALL_MS);
+    ok(runs === 2 && ext.pending.size === 0 && !frames.pending, 'no frame in time: run once from the timer, the frame request cancelled');
+    ext.fire();
+    ok(runs === 2, 'a late frame does not run it again');
+    // A window whose frame was already on its way when it was cancelled delivers it
+    // anyway: still run once.
+    {
+        class LateWindow extends FakeWindow { cancel(id) { this.cancelled.push(id); } }
+        const late = new LateWindow('late'), t2 = new FakeTimers();
+        let n = 0;
+        const fr = new FrameRequester(late, () => null, { timers: t2, standBy: () => true, stallMs: STALL_MS });
+        fr.request(() => n++);
+        t2.advance(STALL_MS);
+        late.fire();
+        ok(n === 1, 'a frame delivered after its cancel does not run the loop a second time');
+    }
+    frames.request(() => runs++);
+    source = null; // the window went out of sight (or closed) meanwhile
     frames.cancel();
-    ok(ext.pending.size === 0 && ext.cancelled.length === 1 && !frames.pending,
-        'a frame is cancelled on the window that issued it, whichever is in sight by then');
-    frames.cancel();
-    ok(ext.cancelled.length === 1 && page.cancelled.length === 1, 'cancelling with nothing pending does nothing');
+    ok(ext.pending.size === 0 && timers.list.size === 0 && !frames.pending,
+        'cancel: the request on the window that issued it, whichever is in sight by then, and the timer');
 }
 
 // --- The loop, modelled on main.js, under random events ------------------------------
 function simulate(seed, steps) {
     let s = seed;
     const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
-    const page = new FakeWindow('page'), ext = new FakeWindow('ext');
-    const world = { pageHidden: false, extOpen: false, extHidden: false };
-    const extInSight = () => (world.extOpen && !world.extHidden ? ext : null);
-    // As main.js (externalFramesWhilePageHidden): the external window only while the page is out of sight.
-    const frameSource = () => (world.pageHidden ? extInSight() : null);
-    const frames = new FrameRequester(page, frameSource);
+    const page = new FakeWindow('page'), ext = new FakeWindow('ext'), timers = new FakeTimers();
+    const world = { pageHidden: false, extOpen: false, extHidden: false, pageStalled: false, extStalled: false };
+    const extInSight = () => world.extOpen && !world.extHidden;
+    // As main.js: externalFramesWhilePageHidden, standBy: the external window in sight.
+    const frames = new FrameRequester(page, () => (world.pageHidden && extInSight() ? ext : null), { timers, standBy: extInSight, stallMs: STALL_MS });
     let animating = false;
     let drawn = 0;
 
@@ -85,7 +120,7 @@ function simulate(seed, steps) {
     function startAnimation() { if (!animating) { animating = true; animate(); } }
     function stopAnimation() { animating = false; frames.cancel(); }
     function refreshAnimationLoop() {
-        switch (loopAction({ xr: false, pageHidden: world.pageHidden, externalInSight: !!extInSight(), animating })) {
+        switch (loopAction({ xr: false, pageHidden: world.pageHidden, externalInSight: extInSight(), animating })) {
             case 'stop': stopAnimation(); break;
             case 'start': startAnimation(); break;
             case 'reaim': frames.request(animate); break;
@@ -97,29 +132,35 @@ function simulate(seed, steps) {
     const problems = [];
     for (let i = 0; i < steps; i++) {
         const r = rnd();
-        let what;
-        if (r < 0.12) { what = 'page hide/show'; world.pageHidden = !world.pageHidden; refreshAnimationLoop(); }
-        else if (r < 0.22) {
+        let what = 'nothing';
+        const drawnBefore = drawn;
+        if (r < 0.10) { what = 'page hide/show'; world.pageHidden = !world.pageHidden; refreshAnimationLoop(); }
+        else if (r < 0.18) {
             if (!world.extOpen) { what = 'open external'; world.extOpen = true; world.extHidden = false; refreshAnimationLoop(); }
-            else {
-                // Closed: its pending frames never come.
-                what = 'close external'; world.extOpen = false; ext.pending.clear(); refreshAnimationLoop();
-            }
+            else { what = 'close external'; world.extOpen = false; ext.pending.clear(); refreshAnimationLoop(); }
         }
-        else if (r < 0.34) { if (world.extOpen) { what = 'external hide/show'; world.extHidden = !world.extHidden; refreshAnimationLoop(); } }
-        else if (r < 0.67) { what = 'page frame'; if (!world.pageHidden) page.fire(); }
-        else { what = 'external frame'; if (world.extOpen && !world.extHidden) ext.fire(); }
+        else if (r < 0.28) { if (world.extOpen) { what = 'external hide/show'; world.extHidden = !world.extHidden; refreshAnimationLoop(); } }
+        else if (r < 0.34) { what = 'page goes quiet/resumes'; world.pageStalled = !world.pageStalled; }
+        else if (r < 0.40) { what = 'external goes quiet/resumes'; world.extStalled = !world.extStalled; }
+        else if (r < 0.62) { what = 'page frame'; if (!world.pageHidden && !world.pageStalled) page.fire(); }
+        else if (r < 0.84) { what = 'external frame'; if (extInSight() && !world.extStalled) ext.fire(); }
+        else {
+            what = 'time passes';
+            const wasAnimating = animating, audience = extInSight();
+            timers.advance(STALL_MS + 50);
+            if (wasAnimating && audience && drawn === drawnBefore) problems.push(`step ${i}: the external window in sight, no frame came, and the loop did not run from the timer`);
+            if (!audience && drawn !== drawnBefore) problems.push(`step ${i}: the loop ran from a timer without the external window in sight`);
+        }
 
-        const pending = page.pending.size + ext.pending.size;
-        const inSight = !world.pageHidden || !!extInSight();
-        if (pending > 1) problems.push(`step ${i} (${what}): ${pending} frames pending — two chains`);
+        const pendingFrames = page.pending.size + ext.pending.size;
+        const inSight = !world.pageHidden || extInSight();
+        if (pendingFrames > 1 || timers.list.size > 1) problems.push(`step ${i} (${what}): ${pendingFrames} frames and ${timers.list.size} timers pending — two chains`);
         if (inSight) {
-            if (!animating || pending !== 1) problems.push(`step ${i} (${what}): something in sight but ${pending} frames pending (animating ${animating}) — the loop died`);
-            // The page's own frames while it is in sight; the external window's only while it is not.
             const want = world.pageHidden ? ext : page;
-            if (pending === 1 && want.pending.size !== 1) problems.push(`step ${i} (${what}): frame pending on ${want === ext ? 'the page' : 'the external window'}, not on the one in sight`);
-        } else if (animating || pending !== 0) {
-            problems.push(`step ${i} (${what}): nothing in sight but the loop runs (${pending} pending)`);
+            if (!animating || pendingFrames !== 1 || want.pending.size !== 1) problems.push(`step ${i} (${what}): something in sight but the frame is not pending on the ${want.name} (animating ${animating}, ${pendingFrames} pending)`);
+            if ((timers.list.size === 1) !== extInSight()) problems.push(`step ${i} (${what}): ${timers.list.size} timers with the external window ${extInSight() ? 'in sight' : 'not in sight'}`);
+        } else if (animating || pendingFrames !== 0 || timers.list.size !== 0) {
+            problems.push(`step ${i} (${what}): nothing in sight but the loop runs (${pendingFrames} frames, ${timers.list.size} timers)`);
         }
     }
     return { problems, drawn };
@@ -133,7 +174,7 @@ function simulate(seed, steps) {
         problems = problems.concat(r.problems.map(p => `seed ${seed}: ${p}`));
         drawn += r.drawn;
     }
-    ok(problems.length === 0, `the loop keeps one frame chain on the window in sight, and stops with none in sight${problems.length ? '\n    ' + problems.slice(0, 5).join('\n    ') : ''}`);
+    ok(problems.length === 0, `one frame chain, on the window in sight, kept going by its timer while the external window is in sight, stopped with nothing in sight${problems.length ? '\n    ' + problems.slice(0, 5).join('\n    ') : ''}`);
     ok(drawn > 10000, `the simulated loop drew frames (${drawn})`);
 }
 
@@ -143,8 +184,9 @@ function simulate(seed, steps) {
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^[ \t]*\/\/[^\n]*$/gm, '')
         .replace(/\s+/g, ' ');
-    ok(/const frames = new FrameRequester\(window, externalFramesWhilePageHidden\);/.test(main), 'main.js asks its frames through FrameRequester');
-    ok(/function externalFramesWhilePageHidden\(\) \{ return document\.hidden \? externalFrameSource\(\) : null; \}/.test(main),
+    ok(/const frames = new FrameRequester\(pageFrames, externalFramesWhilePageHidden, \{ standBy: \(?\(\) => !!externalFrameSource\(\)\)? \}\);/.test(main),
+        'main.js asks its frames through FrameRequester, with a timer only while the external window is in sight');
+    ok(/function externalFramesWhilePageHidden\(\) \{ if \(!document\.hidden\) return null; const external = externalFrameSource\(\); if \(!external\) return null;/.test(main),
         'main.js: the external window\'s frames only while the page is out of sight');
     ok(/function requestNextFrame\(\) \{ frames\.request\(animate\); \}/.test(main), 'main.js: requestNextFrame asks for animate');
     ok(/function stopAnimation\(\) \{ isAnimating = false; cancelPendingFrame\(\); \}/.test(main), 'main.js: stopAnimation cancels the pending frame');

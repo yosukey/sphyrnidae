@@ -12,17 +12,23 @@
  * page it is meant to be operated beside. Every browser on iOS is WebKit, so
  * Chrome and Firefox there too. An iPad asks for desktop sites by default and then
  * calls itself a Mac — a Mac with a touch screen, which no Mac is. Android says so
- * in every browser's user agent, tablets included; one asking for the desktop site
- * calls itself Linux, and is let be.
+ * in every browser's user agent, unless it asks for the desktop site — the default
+ * on larger tablets — and calls itself Linux. That one is known by a touch screen
+ * with no fine pointer (`finePointer`: matchMedia('(any-pointer: fine)')); a Linux
+ * computer has a mouse or a touchpad. ChromeOS (CrOS) opens real windows, and is
+ * offered. Without `finePointer` known, a Linux user agent is offered.
  * @param {{userAgent?: string, platform?: string, maxTouchPoints?: number}} nav
+ * @param {{finePointer?: boolean}} [input]
  * @returns {boolean}
  */
-export function externalWindowOffered(nav) {
+export function externalWindowOffered(nav, { finePointer } = {}) {
     const ua = (nav && nav.userAgent) || '';
+    const touch = ((nav && nav.maxTouchPoints) || 0) > 1;
     if (/\b(iPhone|iPad|iPod)\b/.test(ua)) return false;
     if (/\bAndroid\b/.test(ua)) return false;
     const mac = /Macintosh/.test(ua) || (nav && nav.platform === 'MacIntel');
-    if (mac && ((nav && nav.maxTouchPoints) || 0) > 1) return false;
+    if (mac && touch) return false;
+    if (/\bLinux\b/.test(ua) && !/\bCrOS\b/.test(ua) && touch && finePointer === false) return false;
     return true;
 }
 

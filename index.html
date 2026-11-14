@@ -250,10 +250,10 @@
                             </label>
                         </div>
                     </div>
-                    <!-- External output window (ui-external-output.js). Hidden on phones and
-                         tablets; the label switches between open/close at runtime. -->
+                    <!-- External output window (ui-external-output.js). Hidden on iPhone, iPad and
+                         Android; the label switches between open/close at runtime. -->
                     <div class="control-item hidden" id="externalOutputGroup" style="margin-top: 8px;">
-                        <button id="externalOutputBtn" class="modern-btn secondary" aria-pressed="false" data-i18n-title="externalOutput.description" title="Show only the image and the pointer in a separate window, for a stereo display. This window stays as it is, for operating.">Output to external window</button>
+                        <button id="externalOutputBtn" class="modern-btn secondary" data-i18n-title="externalOutput.description" title="Show only the image and the pointer in a separate window, for a stereo display. This window stays as it is, for operating.">Output to external window</button>
                     </div>
                 </div>
 
@@ -1084,7 +1084,7 @@
                             <div class="help-key" data-i18n="externalOutput.helpFullscreenKey">Click / Enter</div>
                             <div class="help-desc" data-i18n="externalOutput.helpFullscreenDesc">In the external window: full screen (Esc to leave)</div>
                         </div>
-                        <div class="help-note" data-i18n="externalOutput.helpNote">Note: for a stereo display beside this one. The mouse over the image is shown there; with the 3D pointer off, at screen depth. Not available on phones and tablets.</div>
+                        <div class="help-note" data-i18n="externalOutput.helpNote">Note: for a stereo display beside this one. The mouse over the image is shown there; with the 3D pointer off, at screen depth. Not available on iPhone, iPad or Android, where a pop-up would cover this page.</div>
                     </div>
 
                     <h3 class="help-heading" data-i18n="help.hints">Tips</h3>
@@ -1421,7 +1421,7 @@
                 </select>
             </div>
 
-            <button id="viewerExternalOutputBtn" class="viewer-btn hidden" title="Output to external window" aria-label="Output to external window" aria-pressed="false">⧉</button>
+            <button id="viewerExternalOutputBtn" class="viewer-btn hidden" data-i18n="[aria-label]externalOutput.button" data-i18n-title="externalOutput.button" title="External output window" aria-label="External output window" aria-pressed="false">⧉</button>
             <button id="viewerFullscreenBtn" class="viewer-btn" data-i18n-title="viewer.buttonFullscreen" title="Fullscreen">⛶</button>
             <button id="vr-button" class="viewer-btn vr-button hidden" data-i18n="vr.modeDisplay" data-i18n-title="vr.modeDisplay" title="View in VR mode">VR</button>
             <button id="viewerHelpBtn" class="viewer-btn" data-i18n-title="viewer.buttonHelp" title="Help">?</button>
