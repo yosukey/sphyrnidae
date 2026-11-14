@@ -8,9 +8,11 @@
  * Run:  node tests/external-window.test.mjs
  */
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
     externalWindowOffered, openingFeatures, pickExternalScreen,
-    fullscreenSupported, isDocumentFullscreen, onFullscreenChange
+    fullscreenSupported, isDocumentFullscreen, onFullscreenChange, externalPointer
 } from '../js/core/external-window-utils.js';
 
 let pass = 0, fail = 0;
@@ -107,6 +109,40 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     ok(calls === 2, 'hears both change events');
     stop();
     ok(listeners.fullscreenchange.size === 0 && listeners.webkitfullscreenchange.size === 0, 'stops listening');
+}
+
+// --- The pointer the external window draws ---------------------------------------
+{
+    const base = { pointer3dX: 0.25, pointer3dY: 0.75, pointer3dParallax: 0.03, pointer3dVisible: false, pointerOverImage: false };
+    let p = externalPointer({ ...base, pointer3dEnabled: true, pointer3dVisible: true });
+    ok(p.enabled === 1 && p.x === 0.25 && p.y === 0.75 && p.parallax === 0.03, '3D pointer on: drawn as on the page, with its parallax');
+    p = externalPointer({ ...base, pointer3dEnabled: true, pointer3dVisible: false, pointerOverImage: true });
+    ok(p.enabled === 0, '3D pointer on but off the image: not drawn');
+    p = externalPointer({ ...base, pointer3dEnabled: false, pointerOverImage: true });
+    ok(p.enabled === 1 && p.x === 0.25 && p.y === 0.75 && p.parallax === 0, '3D pointer off: the mouse as a flat arrow (zero parallax)');
+    p = externalPointer({ ...base, pointer3dEnabled: false, pointerOverImage: false });
+    ok(p.enabled === 0, '3D pointer off and the mouse off the image: not drawn');
+    p = externalPointer({ pointer3dEnabled: true, pointer3dVisible: true, pointer3dX: NaN, pointer3dY: undefined, pointer3dParallax: Infinity });
+    ok(p.x === 0.5 && p.y === 0.5 && p.parallax === 0, 'non-finite values do not reach the shader');
+}
+
+// --- Wiring checked in the source (these modules pull in three.js/WebGL) ----------
+{
+    const read = (rel) => readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8');
+    const pointer = read('js/ui/ui-pointer3d.js');
+    ok(/if \(!state\.pointer3dEnabled && !state\.externalOutputOpen\) return;/.test(pointer),
+        'the mouse is tracked while the external window is open, 3D pointer or not');
+    ok(/handlePointerMouseLeave\(\) \{[\s\S]*?state\.pointerOverImage = false;/.test(pointer),
+        'leaving the canvas hides the external pointer');
+
+    const output = read('js/rendering/external-output.js');
+    ok(/dst\.gridEnabled\.value = 0\.0;/.test(output), 'the grid is never drawn in the external window');
+    ok(/externalPointer\(state\)/.test(output), 'the external window draws externalPointer');
+
+    const exportSrc = read('js/ui/ui-export.js');
+    ok(/state\.externalOutputHold = true;/.test(exportSrc), 'an export holds the external window');
+    ok(/\} finally \{\s*(\/\/[^\n]*\n\s*)*state\.externalOutputHold = false;/.test(exportSrc),
+        'the hold is released first thing in the export\'s finally');
 }
 
 console.log(`external-window: ${pass} passed, ${fail} failed`);

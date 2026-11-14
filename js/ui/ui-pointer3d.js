@@ -265,16 +265,22 @@ export function updatePointer3dDepthDisplay() {
  * @param {MouseEvent} e - Mouse event
  */
 function handlePointerMouseMove(e) {
-    if (!state.pointer3dEnabled) return;
+    // The position is also wanted while the external output window is open, which
+    // shows where the mouse is — as the 3D pointer, or as a flat arrow when the 3D
+    // pointer is off (externalPointer in core/external-window-utils.js).
+    if (!state.pointer3dEnabled && !state.externalOutputOpen) return;
 
     const uv = screenToPointerUV(e.clientX, e.clientY);
     if (uv) {
         state.pointer3dX = uv.u;
         state.pointer3dY = uv.v;
-        state.pointer3dVisible = true;
-    } else {
-        state.pointer3dVisible = false;
     }
+    state.pointerOverImage = !!uv;
+
+    // With the 3D pointer off nothing changes on the page; the external window
+    // reads the position every frame.
+    if (!state.pointer3dEnabled) return;
+    state.pointer3dVisible = !!uv;
     updateUniforms();
 }
 
@@ -296,6 +302,7 @@ function handlePointerMouseEnter() {
  */
 function handlePointerMouseLeave() {
     state.pointer3dVisible = false;
+    state.pointerOverImage = false;
     // Restore cursor when leaving canvas
     const canvas = state.renderer?.domElement;
     if (canvas && state.pointer3dEnabled) {
@@ -336,6 +343,7 @@ export function setupPointer3dControls(signal) {
 export function cleanupPointer3dControls() {
     state.pointer3dEnabled = false;
     state.pointer3dVisible = false;
+    state.pointerOverImage = false;
     state.pointer3dParallax = 0.0;
     // Restore cursor
     const canvas = state.renderer?.domElement;
