@@ -7,6 +7,7 @@ import { state, getModeLayout, DEBUG, CONSTANTS, is3DTVActive, getViewerDisplayS
 import { isFullSBSMode } from '../mode-utils.js';
 import { vertexShader, getFragmentShaderCached, getShaderGroup, clearShaderCache } from './shaders.js';
 import { ensureEven } from '../utils/pixel-utils.js';
+import { meshBaseSize, fitScale as computeFitScale, meshTransform } from '../core/view-fit.js';
 import * as logger from '../utils/logger.js';
 
 // Track current shader group
@@ -1647,6 +1648,24 @@ export function updateSceneWithImage(texture) {
 }
 
 /**
+ * The page mesh's inputs to the view-fit.js math: geometry size, layout scale
+ * (baseScaleX/Y from updateMeshScaleForMode), crop, and whether 3DTV is active.
+ * Requires state.mesh.
+ * @param {boolean} [is3dtv] - defaults to is3DTVActive()
+ */
+export function meshFitInputs(is3dtv = is3DTVActive()) {
+    return {
+        geomW: state.mesh.geometry.parameters.width,
+        geomH: state.mesh.geometry.parameters.height,
+        baseScaleX: state.mesh.userData.baseScaleX || 1.0,
+        baseScaleY: state.mesh.userData.baseScaleY || 1.0,
+        cropX: state.params.cropX,
+        cropY: state.params.cropY,
+        is3dtv
+    };
+}
+
+/**
 * Fit (fit within the display area)
 */
 export function fitImageToWindow() {
@@ -1692,35 +1711,17 @@ export function fitImageToWindow() {
 
     updateMeshScaleForMode();
 
-    const geomW = state.mesh.geometry.parameters.width;
-    const geomH = state.mesh.geometry.parameters.height;
-
-    const baseScaleX = state.mesh.userData.baseScaleX || 1.0;
-    const baseScaleY = state.mesh.userData.baseScaleY || 1.0;
-
-    const cropRatioX = 1.0 - state.params.cropX;
-    const cropRatioY = 1.0 - state.params.cropY;
-
     // In normal modes, FIT should target the post-crop visible area.
     // In 3DTV mode, mesh transform intentionally ignores regular crop ratio,
-    // so keep FIT based on full geometry there.
-    const meshBaseW = is3dtvMode ? geomW : geomW * baseScaleX * cropRatioX;
-    const meshBaseH = is3dtvMode ? geomH : geomH * baseScaleY * cropRatioY;
+    // so keep FIT based on full geometry there (see meshBaseSize in view-fit.js).
+    const meshBase = meshBaseSize(meshFitInputs(is3dtvMode));
 
     // Use canvas-container size
     const container = document.getElementById('canvas-container');
     const containerWidth = container ? container.clientWidth : window.innerWidth;
     const containerHeight = container ? container.clientHeight : window.innerHeight;
 
-    const frustumH = CONSTANTS.CAMERA_FRUSTUM_HEIGHT;
-    const aspect = containerWidth / containerHeight;
-    const frustumW = frustumH * aspect;
-
-    const margin = 1.0;  // Fit without gaps
-    const scaleW = (frustumW * margin) / meshBaseW;
-    const scaleH = (frustumH * margin) / meshBaseH;
-
-    const fitScale = Math.min(scaleW, scaleH);
+    const fitScale = computeFitScale(containerWidth, containerHeight, meshBase.width, meshBase.height, CONSTANTS.CAMERA_FRUSTUM_HEIGHT);
 
     state.params.scale = fitScale;
 
@@ -1798,48 +1799,33 @@ export function updateMeshScaleForMode() {
 export function updateMeshTransform(skipRender = false) {
     if (!state.mesh) return;
 
-    const baseScaleX = state.mesh.userData.baseScaleX || 1.0;
-    const baseScaleY = state.mesh.userData.baseScaleY || 1.0;
-    const s = state.params.scale;
-
-    // Scale with crop considered (preserve aspect ratio)
-    const cropRatioX = 1.0 - state.params.cropX;
-    const cropRatioY = 1.0 - state.params.cropY;
-
-    // In 3DTV mode, stretch mesh to cover the screen
+    // Normal mode: layout scale x zoom x crop ratio (preserves aspect ratio).
+    // 3DTV mode: stretch the mesh to cover the screen, ignoring baseScale and aspect,
+    // so Half SBS/Full SBS/Half TaB cover the screen; aspect fit and crop are
+    // handled in the shader's UV mapping. Both in meshTransform (view-fit.js).
     const is3dtvTargetMode = is3DTVActive();
+    let containerWidth = 0;
+    let containerHeight = 0;
     if (is3dtvTargetMode) {
         // Compute scale to cover the screen
         const container = document.getElementById('canvas-container');
-        const containerWidth = container ? container.clientWidth : window.innerWidth;
-        const containerHeight = container ? container.clientHeight : window.innerHeight;
-
-        const frustumH = CONSTANTS.CAMERA_FRUSTUM_HEIGHT;
-        const aspect = containerWidth / containerHeight;
-        const frustumW = frustumH * aspect;
-
-        const geomW = state.mesh.geometry.parameters.width;
-        const geomH = state.mesh.geometry.parameters.height;
-
-        // In 3DTV mode, ignore baseScale and use geometry size only
-        // This makes Half SBS/Full SBS/Half TaB cover the screen
-        const meshBaseW = geomW;  // Do not apply baseScaleX
-        const meshBaseH = geomH;  // Do not apply baseScaleY
-
-        // Stretch to cover the screen (ignore aspect ratio)
-        const stretchScaleX = frustumW / meshBaseW;
-        const stretchScaleY = frustumH / meshBaseH;
-
-        // In 3DTV mode, keep mesh always full-screen.
-        // Aspect fit and crop behavior are handled in shader UV mapping.
-        state.mesh.scale.set(stretchScaleX, stretchScaleY, 1);
-    } else {
-        // Normal mode
-        state.mesh.scale.set(baseScaleX * s * cropRatioX, baseScaleY * s * cropRatioY, 1);
+        containerWidth = container ? container.clientWidth : window.innerWidth;
+        containerHeight = container ? container.clientHeight : window.innerHeight;
     }
 
-    state.mesh.position.x = state.params.panX;
-    state.mesh.position.y = state.params.panY;
+    const t = meshTransform({
+        ...meshFitInputs(is3dtvTargetMode),
+        viewW: containerWidth,
+        viewH: containerHeight,
+        frustumH: CONSTANTS.CAMERA_FRUSTUM_HEIGHT,
+        scale: state.params.scale,
+        panX: state.params.panX,
+        panY: state.params.panY
+    });
+    state.mesh.scale.set(t.scaleX, t.scaleY, 1);
+
+    state.mesh.position.x = t.x;
+    state.mesh.position.y = t.y;
 
     if (!skipRender) {
         render();

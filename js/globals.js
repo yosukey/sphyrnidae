@@ -321,6 +321,11 @@ export const state = {
     pointer3dY: 0.5,               // Pointer UV Y position (0-1, per-eye baseUv space; matches shader)
     pointer3dParallax: 0.0,        // Pointer depth: right-eye-only baseUv x-shift (L/R disparity = parallax * eyeWidth px)
     pointer3dVisible: false,        // Whether mouse is currently over the canvas
+    pointerOverImage: false,        // Whether the mouse is over the image at pointer3dX/Y (tracked while 3D pointer or external output is on)
+
+    // External output window (js/ui/ui-external-output.js)
+    externalOutputOpen: false,      // Whether the image is also drawn in the external window
+    externalOutputHold: false,      // Set while an export temporarily rewrites the render state: the external window keeps its last frame
 
     // Distraction-free view (normal/editable mode only)
     uiChromeHidden: false,          // Whether every UI panel/handle is hidden (H key / toggle button)

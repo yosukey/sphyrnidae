@@ -510,5 +510,27 @@
     "showPanels": "Show panels again (H)",
     "minimizeStatus": "Minimize this panel",
     "showStatus": "Show the status panel"
+  },
+  "externalOutput": {
+    "open": "Output to external window",
+    "close": "Close external window",
+    "button": "External output window",
+    "description": "Show only the image and the pointer in a separate window, for a stereo display. This window stays as it is, for operating.",
+    "windowTitle": "Sphyrnidae — external output",
+    "windowHint": "Move this window to the stereo display, then click it or press Enter for full screen (Esc to leave). Operate from the original window.",
+    "windowHintNoFullscreen": "Move this window to the stereo display and maximize it. Operate from the original window.",
+    "blocked": "Could not open the external window. Allow pop-ups for this site, then try again.",
+    "webglFailed": "The external window could not start WebGL and was closed. Close other tabs or windows that use 3D, then try again.",
+    "unusable": "The external window could not be prepared and was closed. Try again.",
+    "placed": "Moved the external window to the second display. Click it to go full screen.",
+    "contextLost": "The external window lost its WebGL context and was closed. Open it again to continue.",
+    "failed": "The external window stopped drawing and was closed.",
+    "helpTitle": "External window",
+    "helpButtonKey": "Button / ⧉",
+    "helpToggleDesc": "Open or close a window that shows only the image and the pointer",
+    "helpFullscreenKey": "Click / Enter",
+    "helpFullscreenDesc": "In the external window: full screen (Esc to leave)",
+    "helpNote": "Note: for a stereo display beside this one. The mouse over the image is shown there; with the 3D pointer off, at screen depth. Not available on iPhone, iPad or Android, where a pop-up would cover this page.",
+    "helpViewerDesc": "Show only the image and the pointer in a separate window, for a stereo display"
   }
 }

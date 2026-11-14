@@ -1587,6 +1587,12 @@ export async function saveImage(updateZoomDisplay) {
     const oldGridEnabled = state.material?.uniforms?.gridEnabled?.value;
     const oldPointer3dEnabled = state.material?.uniforms?.pointer3dEnabled?.value;
 
+    // From here to the finally below, the render state (scale, pan, 3DTV, renderer
+    // size, uniforms, even the shader) is rewritten for the file, across awaits in
+    // the MPO/AGIF/APNG paths. The external output window keeps its last frame
+    // meanwhile instead of drawing that temporary state (ui-external-output.js).
+    state.externalOutputHold = true;
+
     // For image export, force 3DTV off to avoid writing the 3DTV viewport-stretched result.
     if (oldSbs3dtv && is3DTVModeApplicable(mode)) {
         state.params.sbs3dtv = false;
@@ -1929,6 +1935,10 @@ export async function saveImage(updateZoomDisplay) {
         logger.error('Export', err);
         showToast(window.t?.('messages.saveFailed', { error: err.message }) ?? `Save failed: ${err.message}`, 'error');
     } finally {
+        // Let the external window draw again. First, so that a throw below cannot
+        // leave it frozen; this block is synchronous, so it draws only after the
+        // restore has finished.
+        state.externalOutputHold = false;
         // Restore state (always executed, success or failure)
         state.params.scale = oldScale;
         state.params.panX = oldPanX;
