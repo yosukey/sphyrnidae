@@ -74,6 +74,8 @@ const PRECACHE_URLS = [
   './js/core/versionCheck.js',
   './js/core/offlineDetection.js',
   './js/core/export-params.js',
+  './js/core/view-fit.js',
+  './js/core/external-window-utils.js',
   // Rendering
   './js/rendering/renderer.js',
   './js/rendering/shaders.js',
@@ -118,6 +120,7 @@ const PRECACHE_URLS = [
   './js/ui/ui-visibility.js',
   './js/ui/ui-zoom.js',
   './js/ui/ui-pointer3d.js',
+  './js/ui/external-window.js',
   // Utils
   './js/utils/logger.js',
   './js/utils/pixel-utils.js',

@@ -1,0 +1,113 @@
+/**
+ * tests/external-window.test.mjs
+ *
+ * The pure helpers behind the external output window (js/core/external-window-utils.js):
+ * which browsers are offered it, how it is opened, which monitor it is moved to,
+ * and the Fullscreen API on a given document.
+ *
+ * Run:  node tests/external-window.test.mjs
+ */
+
+import {
+    externalWindowOffered, openingFeatures, pickExternalScreen,
+    fullscreenSupported, isDocumentFullscreen, onFullscreenChange
+} from '../js/core/external-window-utils.js';
+
+let pass = 0, fail = 0;
+const ok = (cond, msg) => { if (cond) { pass++; } else { fail++; console.error('  FAIL:', msg); } };
+
+const screen = (left, extra = {}) => ({ availLeft: left, availTop: 0, availWidth: 1920, availHeight: 1040, ...extra });
+
+// --- pickExternalScreen ---------------------------------------------------------
+{
+    const a = screen(0, { isPrimary: true }), b = screen(1920);
+    ok(pickExternalScreen([a, b], a) === b, 'chooses the monitor the page is not on');
+    ok(pickExternalScreen([a, b], b) === a, 'the page on the second monitor: the window goes to the first');
+}
+{
+    // Two calls give two objects for the same monitor on some browsers.
+    const a = screen(0), b = screen(1920);
+    ok(pickExternalScreen([a, b], screen(0)) === b, 'knows the current monitor by its place as well as by identity');
+}
+{
+    const a = screen(0);
+    ok(pickExternalScreen([a], a) === null, 'nowhere to go with one monitor');
+    ok(pickExternalScreen([], null) === null, 'nowhere to go with none');
+}
+{
+    const page = screen(0, { isPrimary: true }), b = screen(1920, { label: 'Office' }), c = screen(3840, { label: '3D' });
+    ok(pickExternalScreen([page, b, c], page, '3D') === c, 'chooses the one chosen last time, by its label');
+    ok(pickExternalScreen([page, b, c], page, 'Projector') === b, 'remembered one gone: the first that is not the page\'s');
+}
+{
+    const page = screen(0), primary = screen(1920, { isPrimary: true }), other = screen(3840);
+    ok(pickExternalScreen([page, primary, other], page) === other, 'prefers a monitor that is not the primary one');
+}
+
+// --- openingFeatures ------------------------------------------------------------
+ok(openingFeatures({ screenX: 100, screenY: 50, outerWidth: 1000, outerHeight: 700, screen: { availWidth: 1920, availHeight: 1040 } })
+    === 'popup=yes,width=1000,height=700,left=1100,top=50', 'opens a popup beside the page, at its size');
+ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000, screen: { availWidth: 1440, availHeight: 900 } })
+    === 'popup=yes,width=1280,height=800,left=3000,top=0', 'keeps to the screen\'s size and a sensible maximum');
+{
+    const f = openingFeatures({ screenX: 0, screenY: 0, outerWidth: 0, outerHeight: 0 });
+    const m = /width=(\d+),height=(\d+)/.exec(f);
+    ok(m && Number(m[1]) >= 320 && Number(m[2]) >= 240, 'never asks for a window too small to see');
+}
+
+// --- externalWindowOffered ------------------------------------------------------
+{
+    const UA = {
+        iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+        ipadMobile: 'Mozilla/5.0 (iPad; CPU OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
+        chromeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/138.0.7204.156 Mobile/15E148 Safari/604.1',
+        macLike: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15',
+        windowsChrome: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        android: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36',
+        androidTablet: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        androidFirefox: 'Mozilla/5.0 (Android 15; Mobile; rv:143.0) Gecko/143.0 Firefox/143.0',
+        linux: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        chromeOs: 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+    };
+    ok(!externalWindowOffered({ userAgent: UA.iphone, maxTouchPoints: 5 }), 'not on an iPhone');
+    ok(!externalWindowOffered({ userAgent: UA.ipadMobile, maxTouchPoints: 5 }), 'not on an iPad');
+    ok(!externalWindowOffered({ userAgent: UA.chromeIos, maxTouchPoints: 5 }), 'not in Chrome on iOS');
+    ok(!externalWindowOffered({ userAgent: UA.macLike, platform: 'MacIntel', maxTouchPoints: 5 }), 'not on an iPad that calls itself a Mac');
+    ok(!externalWindowOffered({ userAgent: UA.android, maxTouchPoints: 5 }), 'not on an Android phone');
+    ok(!externalWindowOffered({ userAgent: UA.androidTablet, maxTouchPoints: 10 }), 'not on an Android tablet');
+    ok(!externalWindowOffered({ userAgent: UA.androidFirefox, maxTouchPoints: 5 }), 'not in Firefox on Android');
+    ok(externalWindowOffered({ userAgent: UA.macLike, platform: 'MacIntel', maxTouchPoints: 0 }), 'on a Mac');
+    ok(externalWindowOffered({ userAgent: UA.windowsChrome, platform: 'Win32', maxTouchPoints: 10 }), 'on Windows with a touch screen');
+    ok(externalWindowOffered({ userAgent: UA.linux, platform: 'Linux x86_64', maxTouchPoints: 0 }), 'on Linux');
+    ok(externalWindowOffered({ userAgent: UA.chromeOs, platform: 'Linux x86_64', maxTouchPoints: 10 }), 'on ChromeOS');
+    ok(externalWindowOffered({}), 'when nothing is known');
+}
+
+// --- Fullscreen on a given document ---------------------------------------------
+{
+    const listeners = {};
+    const doc = {
+        fullscreenEnabled: true,
+        fullscreenElement: null,
+        addEventListener(type, fn) { (listeners[type] ||= new Set()).add(fn); },
+        removeEventListener(type, fn) { listeners[type]?.delete(fn); },
+    };
+    const el = { requestFullscreen() {} };
+    ok(fullscreenSupported(doc, el), 'supported with the standard API');
+    ok(!fullscreenSupported({ fullscreenEnabled: false }, el), 'not supported when disabled');
+    ok(fullscreenSupported({ webkitFullscreenEnabled: true }, { webkitRequestFullscreen() {} }), 'supported with the WebKit prefix');
+    ok(!fullscreenSupported({ fullscreenEnabled: true }, {}), 'not supported without a request method');
+    ok(!isDocumentFullscreen(doc), 'not in full screen');
+    ok(isDocumentFullscreen({ webkitFullscreenElement: {} }), 'in full screen, WebKit-prefixed');
+
+    let calls = 0;
+    const stop = onFullscreenChange(doc, () => calls++);
+    for (const fn of listeners.fullscreenchange) fn();
+    for (const fn of listeners.webkitfullscreenchange) fn();
+    ok(calls === 2, 'hears both change events');
+    stop();
+    ok(listeners.fullscreenchange.size === 0 && listeners.webkitfullscreenchange.size === 0, 'stops listening');
+}
+
+console.log(`external-window: ${pass} passed, ${fail} failed`);
+if (fail > 0) process.exit(1);
