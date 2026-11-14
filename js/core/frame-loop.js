@@ -13,14 +13,22 @@
  * A window can also stop giving frames without saying so: a compositor that does not
  * tell the browser a window was minimised, a display turned off. While the external
  * window is in sight (main.js decides, standBy), a timer stands by with each request,
- * and if no frame has come after STALL_MS the loop runs from the timer instead, so
- * the external window the audience looks at goes on, slowly, rather than freezing.
- * Only one of the two runs per frame asked. Without the external window there is no
- * timer: the page alone behaves as before.
+ * and if no frame has come after STALL_MS the loop runs from the timer instead —
+ * once per STALL_MS while frames stay away — so the external window the audience
+ * looks at goes on, slowly, rather than freezing. STALL_MS is long next to any real
+ * frame interval: frames that are merely slow (a heavy image, software rendering)
+ * come before it and never let the timer run, which would only add work where there
+ * is already too much. Only one of the two runs per frame asked. Without the external
+ * window there is no timer: the page alone behaves as before.
  */
 
-/** How long to wait for a frame before running the loop from a timer instead. */
-export const STALL_MS = 250;
+/**
+ * How long to wait for a frame before running the loop from a timer instead. A second:
+ * well beyond the frame interval of a slow machine (software rendering here gave one
+ * frame in about 0.7 s), where a shorter wait ran the timer between frames that were
+ * still coming and more than doubled the work.
+ */
+export const STALL_MS = 1000;
 
 /**
  * What the loop does after the page or the external window came into or went out of

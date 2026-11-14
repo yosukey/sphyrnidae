@@ -39,6 +39,10 @@ for (const xr of [false, true]) {
     }
 }
 
+// The wait stays well above a slow machine's frame interval (about 0.7 s was seen
+// with software rendering); 250 ms ran the timer between real frames there.
+ok(STALL_MS >= 1000, `STALL_MS is at least a second (${STALL_MS})`);
+
 // --- Fakes --------------------------------------------------------------------------
 class FakeWindow {
     constructor(name) { this.name = name; this.pending = new Map(); this.nextId = 1; this.cancelled = []; }
@@ -80,10 +84,29 @@ class FakeTimers {
     ext.fire();
     ok(runs === 1 && timers.list.size === 0 && !frames.pending, 'the frame comes: run once, the timer cleared');
     frames.request(() => runs++);
-    timers.advance(STALL_MS);
-    ok(runs === 2 && ext.pending.size === 0 && !frames.pending, 'no frame in time: run once from the timer, the frame request cancelled');
+    timers.advance(STALL_MS * 2);
+    ok(runs === 2 && ext.pending.size === 0 && !frames.pending, 'no frame for STALL_MS: run once from the timer, the frame request cancelled');
     ext.fire();
     ok(runs === 2, 'a late frame does not run it again');
+    // Frames merely slow (each a little under STALL_MS apart): the timer never runs.
+    // (A shorter STALL_MS ran the timer between such frames and more than doubled the work.)
+    {
+        const w = new FakeWindow('slow'), t3 = new FakeTimers();
+        let n = 0, fromTimer = 0;
+        const fr = new FrameRequester(w, () => null, { timers: t3, standBy: () => true, stallMs: STALL_MS });
+        const loop = (time) => { n++; if (time === undefined) fromTimer++; fr.request(loop); };
+        fr.request(loop);
+        for (let i = 0; i < 50; i++) { t3.advance(STALL_MS * 0.8); w.fire(); }
+        ok(n === 50 && fromTimer === 0, `slow frames: the loop runs on them alone, the timer never (${n} runs, ${fromTimer} from the timer)`);
+        // Then the window goes quiet: the timer runs the loop, once per STALL_MS.
+        const before = n;
+        t3.advance(STALL_MS * 10);
+        ok(fromTimer === 10 && n - before === 10, `stalled: the loop runs from the timer once per STALL_MS (${fromTimer} in 10 × STALL_MS)`);
+        w.fire();
+        const afterResume = fromTimer;
+        for (let i = 0; i < 10; i++) { t3.advance(STALL_MS * 0.5); w.fire(); }
+        ok(fromTimer === afterResume, 'frames again: the timer stands back');
+    }
     // A window whose frame was already on its way when it was cancelled delivers it
     // anyway: still run once.
     {
@@ -92,7 +115,7 @@ class FakeTimers {
         let n = 0;
         const fr = new FrameRequester(late, () => null, { timers: t2, standBy: () => true, stallMs: STALL_MS });
         fr.request(() => n++);
-        t2.advance(STALL_MS);
+        t2.advance(STALL_MS * 2);
         late.fire();
         ok(n === 1, 'a frame delivered after its cancel does not run the loop a second time');
     }
@@ -147,7 +170,8 @@ function simulate(seed, steps) {
         else {
             what = 'time passes';
             const wasAnimating = animating, audience = extInSight();
-            timers.advance(STALL_MS + 50);
+            // No frame meanwhile: within two STALL_MS the timer must have run the loop.
+            timers.advance(2 * STALL_MS + 50);
             if (wasAnimating && audience && drawn === drawnBefore) problems.push(`step ${i}: the external window in sight, no frame came, and the loop did not run from the timer`);
             if (!audience && drawn !== drawnBefore) problems.push(`step ${i}: the loop ran from a timer without the external window in sight`);
         }
