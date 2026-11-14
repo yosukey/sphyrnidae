@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { state, DEBUG } from '../globals.js';
 import { applyVRZoomDelta } from '../ui/ui-input.js';
 import { readVRControllerInput } from './vr-input.js';
+import { closeExternalOutput } from '../ui/ui-external-output.js';
 import * as logger from '../utils/logger.js';
 
 let vrButton = null;
@@ -231,6 +232,11 @@ async function onVRButtonClick() {
 
     try {
         if (!vrSession) {
+            // VR draws with the page's renderer and owns the render loop, so the
+            // external output window is closed first. Synchronous, so the click's
+            // user activation still covers requestSession() below.
+            closeExternalOutput();
+
             // Start VR session with timeout protection (10 seconds)
             let sessionTimedOut = false;
             const sessionPromise = navigator.xr.requestSession('immersive-vr', {

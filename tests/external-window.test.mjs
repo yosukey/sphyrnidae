@@ -139,6 +139,36 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     ok(/dst\.gridEnabled\.value = 0\.0;/.test(output), 'the grid is never drawn in the external window');
     ok(/externalPointer\(state\)/.test(output), 'the external window draws externalPointer');
 
+    const vr = read('js/rendering/vr.js');
+    const closeAt = vr.indexOf('closeExternalOutput();');
+    const requestAt = vr.indexOf("navigator.xr.requestSession('immersive-vr'");
+    ok(closeAt > 0 && requestAt > closeAt, 'entering VR closes the external window first');
+
+    const ui = read('js/ui/ui.js');
+    ok(/setupExternalOutputControls\(signal\);/.test(ui), 'ui.js wires the external output buttons');
+
+    const main = read('js/main.js');
+    ok(/renderExternalOutput\(\);/.test(main), 'the render loop draws the external window');
+    ok(/addEventListener\('external-output-frames', refreshAnimationLoop\)/.test(main),
+        'the render loop re-aims its frames when the external window opens, closes or changes sight');
+
+    const html = read('index.html');
+    ok(/id="externalOutputGroup"[^>]*class="[^"]*\bhidden\b|class="[^"]*\bhidden\b[^"]*" id="externalOutputGroup"/.test(html),
+        'the menu button starts hidden (shown only where offered)');
+    ok(/id="viewerExternalOutputBtn" class="[^"]*\bhidden\b/.test(html), 'the viewer button starts hidden');
+
+    // Every externalOutput.* key the page and the module use exists in each locale.
+    const used = new Set([
+        ...[...html.matchAll(/data-i18n(?:-title)?="externalOutput\.(\w+)"/g)].map(m => m[1]),
+        ...[...read('js/ui/ui-external-output.js').matchAll(/t\('externalOutput\.(\w+)'/g)].map(m => m[1]),
+    ]);
+    ok(used.size >= 10, 'found the externalOutput keys in use');
+    for (const lang of ['en', 'ja']) {
+        const section = JSON.parse(read(`locales/${lang}.json`)).externalOutput || {};
+        const missing = [...used].filter(k => typeof section[k] !== 'string' || !section[k]);
+        ok(missing.length === 0, `locales/${lang}.json has every externalOutput key in use (missing: ${missing.join(', ')})`);
+    }
+
     const exportSrc = read('js/ui/ui-export.js');
     ok(/state\.externalOutputHold = true;/.test(exportSrc), 'an export holds the external window');
     ok(/\} finally \{\s*(\/\/[^\n]*\n\s*)*state\.externalOutputHold = false;/.test(exportSrc),

@@ -60,6 +60,7 @@ import {
 } from './ui-viewer.js';
 import { cleanupOfflineDetection } from '../core/offlineDetection.js';
 import { setupPointer3dControls, cleanupPointer3dControls } from './ui-pointer3d.js';
+import { setupExternalOutputControls, closeExternalOutput } from './ui-external-output.js';
 
 // Input handler module
 import {
@@ -264,6 +265,7 @@ export function cleanupUI() {
     cleanupAlignmentControls();          // Alignment controls
     cleanupTextOverlayControls();        // Text overlay UI
     cleanupPointer3dControls();          // 3D Pointer controls
+    closeExternalOutput();               // External output window
     cleanupUpdateNotification();         // Update notification system
 
     // Clear DOM reference cache
@@ -1017,6 +1019,9 @@ export function setupInputHandlers() {
 
     // 3D Pointer controls
     setupPointer3dControls(signal);
+
+    // External output window (image and pointer only)
+    setupExternalOutputControls(signal);
 
     // ===== Viewer mode control bar =====
     setViewerCallbacks({ updateZoomDisplay });

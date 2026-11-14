@@ -31,6 +31,7 @@ Sphyrnidae is an open-source web application for viewing stereoscopic images wit
 - **Viewer Mode**: Browse through multiple images with navigation controls
 - **URL List Loading**: Load entire collections from text files via URL parameter
 - **Clipboard Export**: Share images with settings via clipboard in multiple formats
+- **External Window Output**: Show only the image and the pointer (including the 3D pointer) in a separate window for a second, stereoscopic monitor, while operating from the original window
 
 ## Why Sphyrnidae?
 
@@ -216,6 +217,34 @@ The following viewing modes are supported via the `mode` parameter (use the mode
 - `wiggle`: Wiggle stereoscopy
 - `lrl`: LRL format
 - `matrix_2x2`: 2x2 matrix
+
+### External Window Output
+
+Only the image, its text overlay and the pointer are stereoscopic; the menus and
+panels are not, and on a stereo monitor they sit at screen depth in front of the
+image. With a stereo monitor connected as a second display, **Output to external
+window** (below the display mode in the menu, or **⧉** in the viewer bar) opens a
+window that shows only the picture, while this window stays as it is for
+operating. Press the same button again, or close the window, to end it.
+
+- **What is shown**: the image in the current display mode, with every
+  adjustment (parallax, alignment, crop, color, text overlay, wiggle, 3DTV),
+  framed as on the page: the same point at the center, at the same zoom relative
+  to fit, adapted to the window's aspect ratio. The alignment grid is not shown.
+- **The pointer**: the mouse over the image is shown there too. With the 3D
+  pointer on (`D`), it is drawn exactly as on the page, at its depth; otherwise
+  as a flat arrow at screen depth.
+- **Placing it**: in Chrome and Edge, after you allow "window management", the
+  window is moved onto the other monitor and fills it. Elsewhere it opens beside
+  this window; move it by hand. If the browser blocks pop-ups, allow them for
+  this site.
+- **Full screen**: click the external window, or press Enter there (Esc leaves
+  it). Side-by-side input needs full screen; for interlace, use full screen so
+  that the rows line up with the monitor's.
+- It keeps drawing while this window is minimised. Entering VR closes it. It is
+  not offered on phones and tablets, where a pop-up would cover the page.
+- The image is uploaded to the GPU once more for the second window, so very
+  large images use twice the GPU memory.
 
 ## Development Verification
 
