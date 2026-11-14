@@ -127,52 +127,63 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
 }
 
 // --- Wiring checked in the source (these modules pull in three.js/WebGL) ----------
+// The release runs these tests on its built tree, where terser has stripped the
+// comments and re-printed the code (objects across lines, 0.0 as 0). So the source is
+// compared with its comments removed and every run of whitespace made one space, and
+// the patterns below are written for that form.
 {
-    const read = (rel) => readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8');
-    const pointer = read('js/ui/ui-pointer3d.js');
+    const raw = (rel) => readFileSync(fileURLToPath(new URL(`../${rel}`, import.meta.url)), 'utf8');
+    const code = (rel) => raw(rel)
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^[ \t]*\/\/[^\n]*$/gm, '')
+        .replace(/\s+/g, ' ');
+
+    const pointer = code('js/ui/ui-pointer3d.js');
     ok(/if \(!state\.pointer3dEnabled && !state\.externalOutputOpen\) return;/.test(pointer),
         'the mouse is tracked while the external window is open, 3D pointer or not');
-    ok(/handlePointerMouseLeave\(\) \{[\s\S]*?state\.pointerOverImage = false;/.test(pointer),
+    ok(/function handlePointerMouseLeave\(\) \{ state\.pointer3dVisible = false; state\.pointerOverImage = false;/.test(pointer),
         'leaving the canvas hides the external pointer');
-
-    const output = read('js/rendering/external-output.js');
-    ok(/return \{ output: null, failure: 'blocked' \};/.test(output) && /return \{ output: null, failure: 'webgl' \};/.test(output),
-        'opening tells a refused pop-up from a refused WebGL context');
-    const controller = read('js/ui/ui-external-output.js');
-    ok(/result\.failure === 'webgl'/.test(controller) && /externalOutput\.webglFailed/.test(controller),
-        'a refused WebGL context is not reported as a pop-up blocker');
     ok(/if \(!state\.renderer \|\| !state\.mesh \|\| !state\.material\?\.uniforms\) return null;/.test(pointer),
         'the pointer is not computed on the fallback material without uniforms');
-    ok(/window\.t\?\.\(key, \{ defaultValue: fallback \}\)/.test(controller),
-        'the English text is the defaultValue, so no raw key shows before i18next is ready');
-    ok(/if \(isExternalOutputOpen\(\)\) \{\s*closeExternalOutput\(\);/.test(controller) && /if \(output\) output\.close\(\);\s*openExternalOutput\(\);/.test(controller),
-        'a window closed by hand and not yet noticed does not swallow the next click');
-    // Dispose hooks: dead entries go every frame, not only past a threshold.
-    const trackBody = output.slice(output.indexOf('    track(drawing) {'), output.indexOf('    release() {'));
-    ok(!/prunedAt/.test(output) && /hooks\.length = kept;/.test(trackBody),
-        'entries for objects the page disposed are dropped on every draw');
-    ok(/dst\.gridEnabled\.value = 0\.0;/.test(output), 'the grid is never drawn in the external window');
-    ok(/externalPointer\(state\)/.test(output), 'the external window draws externalPointer');
 
-    const vr = read('js/rendering/vr.js');
+    const output = code('js/rendering/external-output.js');
+    ok(/return \{ output: null, failure: 'blocked' \};/.test(output) && /return \{ output: null, failure: 'webgl' \};/.test(output),
+        'opening tells a refused pop-up from a refused WebGL context');
+    ok(/if \(dst\.gridEnabled\) dst\.gridEnabled\.value = 0(?:\.0)?;/.test(output), 'the grid is never drawn in the external window');
+    ok(/const p = externalPointer\(state\);/.test(output), 'the external window draws externalPointer');
+    // Dispose hooks: dead entries go every frame, not only past a threshold.
+    const trackBody = output.slice(output.indexOf('track(drawing) {'), output.indexOf('release() {'));
+    ok(trackBody.length > 0 && !/prunedAt/.test(output) && /hooks\.length = kept;/.test(trackBody),
+        'entries for objects the page disposed are dropped on every draw');
+    ok(/externalFraming\(\{/.test(output) && /if \(is3DTVActive\(\)\) \{/.test(output),
+        'outside 3DTV the plane is framed by what the page shows');
+
+    const controller = code('js/ui/ui-external-output.js');
+    ok(/result\.failure === 'webgl'/.test(controller) && /externalOutput\.webglFailed/.test(controller),
+        'a refused WebGL context is not reported as a pop-up blocker');
+    ok(/window\.t\?\.\(key, \{ defaultValue: fallback \}\) \?\? fallback/.test(controller),
+        'the English text is the defaultValue, so no raw key shows before i18next is ready');
+    ok(/if \(isExternalOutputOpen\(\)\) \{ closeExternalOutput\(\); return; \} if \(output\) output\.close\(\); openExternalOutput\(\);/.test(controller),
+        'a window closed by hand and not yet noticed does not swallow the next click');
+
+    const vr = code('js/rendering/vr.js');
     const closeAt = vr.indexOf('closeExternalOutput();');
     const requestAt = vr.indexOf("navigator.xr.requestSession('immersive-vr'");
     ok(closeAt > 0 && requestAt > closeAt, 'entering VR closes the external window first');
-
     const started = vr.slice(vr.indexOf('async function onSessionStarted'));
-    ok(started.indexOf('closeExternalOutput();') > 0
-        && started.indexOf('closeExternalOutput();') < started.indexOf('state.renderer.xr.enabled = true;'),
+    const closeInStart = started.indexOf('closeExternalOutput();');
+    ok(closeInStart > 0 && closeInStart < started.indexOf('state.renderer.xr.enabled = true;'),
         'a window opened while the VR session was starting is closed when it starts');
 
-    const ui = read('js/ui/ui.js');
+    const ui = code('js/ui/ui.js');
     ok(/setupExternalOutputControls\(signal\);/.test(ui), 'ui.js wires the external output buttons');
 
-    const main = read('js/main.js');
+    const main = code('js/main.js');
     ok(/renderExternalOutput\(\);/.test(main), 'the render loop draws the external window');
     ok(/addEventListener\('external-output-frames', refreshAnimationLoop\)/.test(main),
         'the render loop re-aims its frames when the external window opens, closes or changes sight');
 
-    const html = read('index.html');
+    const html = raw('index.html');
     ok(/id="externalOutputGroup"[^>]*class="[^"]*\bhidden\b|class="[^"]*\bhidden\b[^"]*" id="externalOutputGroup"/.test(html),
         'the menu button starts hidden (shown only where offered)');
     ok(/id="viewerExternalOutputBtn" class="[^"]*\bhidden\b/.test(html), 'the viewer button starts hidden');
@@ -180,18 +191,18 @@ ok(openingFeatures({ screenX: 0, screenY: 0, outerWidth: 3000, outerHeight: 2000
     // Every externalOutput.* key the page and the module use exists in each locale.
     const used = new Set([
         ...[...html.matchAll(/data-i18n(?:-title)?="externalOutput\.(\w+)"/g)].map(m => m[1]),
-        ...[...read('js/ui/ui-external-output.js').matchAll(/t\('externalOutput\.(\w+)'/g)].map(m => m[1]),
+        ...[...controller.matchAll(/t\('externalOutput\.(\w+)'/g)].map(m => m[1]),
     ]);
     ok(used.size >= 10, 'found the externalOutput keys in use');
     for (const lang of ['en', 'ja']) {
-        const section = JSON.parse(read(`locales/${lang}.json`)).externalOutput || {};
+        const section = JSON.parse(raw(`locales/${lang}.json`)).externalOutput || {};
         const missing = [...used].filter(k => typeof section[k] !== 'string' || !section[k]);
         ok(missing.length === 0, `locales/${lang}.json has every externalOutput key in use (missing: ${missing.join(', ')})`);
     }
 
-    const exportSrc = read('js/ui/ui-export.js');
+    const exportSrc = code('js/ui/ui-export.js');
     ok(/state\.externalOutputHold = true;/.test(exportSrc), 'an export holds the external window');
-    ok(/\} finally \{\s*(\/\/[^\n]*\n\s*)*state\.externalOutputHold = false;/.test(exportSrc),
+    ok(/\} finally \{ state\.externalOutputHold = false;/.test(exportSrc),
         'the hold is released first thing in the export\'s finally');
 }
 
