@@ -7,8 +7,9 @@
  * 1. Equivalence: meshBaseSize / fitScale / meshTransform return exactly what the
  *    renderer's former inline formulas returned (copied below as the reference), so
  *    moving them out changed nothing on the page.
- * 2. The external framing: scaling the page's framing by externalZoom keeps the same
- *    image point at the centre and the same zoom relative to fit.
+ * 2. The external framing (externalFraming): everything of the image the page shows is
+ *    in the external view, centred and as large as it fits; while the page shows the
+ *    whole image that is the external view's fit, whatever the page's own size.
  * 3. The external pixel ratio: exact for interlace, capped at 2 otherwise.
  *
  * Run:  node tests/view-fit.test.mjs
@@ -16,7 +17,7 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { meshBaseSize, fitScale, meshTransform, externalZoom, externalPixelRatio } from '../js/core/view-fit.js';
+import { meshBaseSize, fitScale, meshTransform, externalFraming, externalPixelRatio } from '../js/core/view-fit.js';
 
 let pass = 0, fail = 0;
 const ok = (cond, msg) => { if (cond) { pass++; } else { fail++; console.error('  FAIL:', msg); } };
@@ -87,64 +88,116 @@ for (let i = 0; i < 500; i++) {
         `meshTransform identical to the former inline formula (case ${i})`);
 }
 
-// --- The external framing ---------------------------------------------------------
-{
-    // A 4:3 eye image in parallel view (baseScaleX 2), page 1600x900, zoomed 1.7x
-    // from fit and panned. The external window is 1920x1080 (same aspect) and then
-    // 1920x1200 (taller).
-    const p = { geomW: 10 * 4 / 3, geomH: 10, baseScaleX: 2, baseScaleY: 1, cropX: 0.1, cropY: 0.05, is3dtv: false };
+// --- The external framing: what the page shows, as large as it fits --------------
+// The page as drawn: its plane (meshTransform) seen through its camera's frustum.
+const pageCamera = (v) => ({ left: -FRUSTUM_H * (v.w / v.h) / 2, right: FRUSTUM_H * (v.w / v.h) / 2, top: FRUSTUM_H / 2, bottom: -FRUSTUM_H / 2 });
+function frame(p, scale, panX, panY, page, ext, view = pageCamera(page)) {
+    const mesh = meshTransform({ ...p, viewW: page.w, viewH: page.h, frustumH: FRUSTUM_H, scale, panX, panY });
+    const t = externalFraming({ mesh, geomW: p.geomW, geomH: p.geomH, view, viewW: ext.w, viewH: ext.h, frustumH: FRUSTUM_H });
+    return { mesh, t };
+}
+// The part of the image the page shows, in image coordinates (0..1), or null.
+function visiblePart(p, mesh, page) {
+    const v = pageCamera(page);
+    const w = p.geomW * mesh.scaleX, h = p.geomH * mesh.scaleY;
+    const u0 = Math.max(0, (v.left - (mesh.x - w / 2)) / w), u1 = Math.min(1, (v.right - (mesh.x - w / 2)) / w);
+    const v0 = Math.max(0, (v.bottom - (mesh.y - h / 2)) / h), v1 = Math.min(1, (v.top - (mesh.y - h / 2)) / h);
+    return (u1 > u0 && v1 > v0) ? { u0, u1, v0, v1 } : null;
+}
+// An image-coordinate box in a view's world coordinates, given the plane there.
+function placed(p, t, part) {
+    const w = p.geomW * t.scaleX, h = p.geomH * t.scaleY;
+    return { x0: t.x + (part.u0 - 0.5) * w, x1: t.x + (part.u1 - 0.5) * w, y0: t.y + (part.v0 - 0.5) * h, y1: t.y + (part.v1 - 0.5) * h };
+}
+// Checks the framing's promises for one case; returns the part's share of the external view.
+function checkFraming(label, p, scale, panX, panY, page, ext) {
+    const { mesh, t } = frame(p, scale, panX, panY, page, ext);
+    const halfW = FRUSTUM_H * (ext.w / ext.h) / 2, halfH = FRUSTUM_H / 2, eps = 1e-7;
+    ok(near(t.scaleX / mesh.scaleX, t.scaleY / mesh.scaleY), `${label}: the image keeps its aspect`);
+    const part = visiblePart(p, mesh, page) || { u0: 0, u1: 1, v0: 0, v1: 1 };
+    const r = placed(p, t, part);
+    ok(r.x0 >= -halfW - eps && r.x1 <= halfW + eps && r.y0 >= -halfH - eps && r.y1 <= halfH + eps,
+        `${label}: everything the page shows is in the external view`);
+    const share = Math.max((r.x1 - r.x0) / (2 * halfW), (r.y1 - r.y0) / (2 * halfH));
+    ok(near(share, 1, 1e-7), `${label}: as large as it fits (touches the view's edges in one direction)`);
+    ok(Math.abs((r.x0 + r.x1) / 2) < 1e-7 && Math.abs((r.y0 + r.y1) / 2) < 1e-7, `${label}: centred`);
+    return { mesh, t };
+}
+const sameT = (a, b) => near(a.scaleX, b.scaleX) && near(a.scaleY, b.scaleY) && near(a.x, b.x) && near(a.y, b.y);
+
+// Random cases: layouts, crops, zoom (from zoomed out to well in), pans, both views' sizes.
+for (let i = 0; i < 400; i++) {
+    const p = { geomW: 10 * (0.4 + rnd() * 2.5), geomH: 10, baseScaleX: pick([1, 2, 3]), baseScaleY: pick([1, 2]), cropX: rnd() * 0.5, cropY: rnd() * 0.5, is3dtv: false };
+    const page = { w: 400 + Math.floor(rnd() * 2400), h: 300 + Math.floor(rnd() * 1300) };
+    const ext = { w: 640 + Math.floor(rnd() * 3200), h: 480 + Math.floor(rnd() * 1800) };
     const base = meshBaseSize(p);
-    const pageFit = fitScale(1600, 900, base.width, base.height, FRUSTUM_H);
-    const page = { ...p, scale: pageFit * 1.7, panX: 1.2, panY: -0.4 };
-    const pageT = meshTransform({ ...page, viewW: 1600, viewH: 900, frustumH: FRUSTUM_H });
-
-    // Same aspect: identical picture.
-    {
-        const extFit = fitScale(1920, 1080, base.width, base.height, FRUSTUM_H);
-        const k = externalZoom(pageFit, extFit);
-        ok(near(k, 1), 'same aspect: externalZoom is 1');
-        const extT = meshTransform({ ...page, viewW: 1920, viewH: 1080, frustumH: FRUSTUM_H, zoom: k });
-        ok(near(extT.scaleX, pageT.scaleX) && near(extT.x, pageT.x), 'same aspect: same mesh transform');
-    }
-
-    // Another aspect: same zoom relative to fit, and the point at the view centre
-    // (world origin) is the same image point.
-    {
-        const extFit = fitScale(1920, 1200, base.width, base.height, FRUSTUM_H);
-        const k = externalZoom(pageFit, extFit);
-        const extT = meshTransform({ ...page, viewW: 1920, viewH: 1200, frustumH: FRUSTUM_H, zoom: k });
-        ok(near(extT.scaleX / extFit, pageT.scaleX / pageFit), 'other aspect: same zoom relative to fit');
-        // Image-relative coordinate of the world origin: (0 - centre) / mesh width.
-        const uPage = (0 - pageT.x) / pageT.scaleX;
-        const uExt = (0 - extT.x) / extT.scaleX;
-        const vPage = (0 - pageT.y) / pageT.scaleY;
-        const vExt = (0 - extT.y) / extT.scaleY;
-        ok(near(uPage, uExt) && near(vPage, vExt), 'other aspect: the same image point at the view centre');
-    }
-
-    // Viewer mode sets scale to the page's fit: the external window then shows its own fit.
-    {
-        const extFit = fitScale(1280, 1024, base.width, base.height, FRUSTUM_H);
-        const k = externalZoom(pageFit, extFit);
-        const extT = meshTransform({ ...p, scale: pageFit, panX: 0, panY: 0, viewW: 1280, viewH: 1024, frustumH: FRUSTUM_H, zoom: k });
-        const fitT = meshTransform({ ...p, scale: extFit, panX: 0, panY: 0, viewW: 1280, viewH: 1024, frustumH: FRUSTUM_H });
-        ok(near(extT.scaleX, fitT.scaleX) && near(extT.scaleY, fitT.scaleY), 'page at fit: external window at its own fit');
-    }
-
-    // 3DTV: the mesh covers the external window's own frustum, whatever the page's.
-    {
-        const tv = { ...p, is3dtv: true, scale: 3, panX: 0, panY: 0 };
-        const extT = meshTransform({ ...tv, viewW: 1920, viewH: 1080, frustumH: FRUSTUM_H, zoom: 2 });
-        ok(near(extT.scaleX * tv.geomW, FRUSTUM_H * 1920 / 1080) && near(extT.scaleY * tv.geomH, FRUSTUM_H),
-            '3DTV: the mesh covers the external frustum exactly');
-    }
+    const pageFit = fitScale(page.w, page.h, base.width, base.height, FRUSTUM_H);
+    checkFraming(`random case ${i}`, p, pageFit * (0.3 + rnd() * 4), (rnd() - 0.5) * 12, (rnd() - 0.5) * 12, page, ext);
 }
 
-// externalZoom falls back to 1 when a view is collapsed or the page has no mesh.
-ok(externalZoom(NaN, 2) === 1, 'externalZoom: NaN page fit gives 1');
-ok(externalZoom(0, 2) === 1, 'externalZoom: zero page fit gives 1');
-ok(externalZoom(2, Infinity) === 1, 'externalZoom: infinite other fit gives 1');
-ok(externalZoom(2, 3) === 1.5, 'externalZoom: ratio of the two fits');
+const tvView = { w: 1920, h: 1080 };
+const menuOpen = { w: 1680, h: 1080 }, menuClosed = { w: 1920, h: 1080 };
+const extFitHeight = (p, ext) => { const b = meshBaseSize(p); return fitScale(ext.w, ext.h, b.width, b.height, FRUSTUM_H) * b.height; };
+
+// The whole image on the page: the external view's fit, whatever the page's size.
+for (const [name, p] of [['16:9 image', { geomW: 10 * 16 / 9, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: false }],
+                         ['parallel view, 4:3 eyes', { geomW: 10 * 4 / 3, geomH: 10, baseScaleX: 2, baseScaleY: 1, cropX: 0.1, cropY: 0.05, is3dtv: false }]]) {
+    const b = meshBaseSize(p);
+    const fitOpen = fitScale(menuOpen.w, menuOpen.h, b.width, b.height, FRUSTUM_H);
+    const atFit = checkFraming(`${name} at fit`, p, fitOpen, 0, 0, menuOpen, tvView);
+    ok(near(p.geomH * atFit.t.scaleY, extFitHeight(p, tvView)), `${name} at fit: the external view at its own fit`);
+    // The menu closes: the page's plane stays as it is, only its view widens.
+    const after = frame(p, fitOpen, 0, 0, menuClosed, tvView);
+    ok(sameT(atFit.t, after.t), `${name}: hiding the page's panels moves nothing in the external view`);
+    // Zoomed out and panned within the page: still the whole image at fit, centred.
+    const out = checkFraming(`${name} zoomed out`, p, fitOpen * 0.7, 1.2, -0.8, menuOpen, tvView);
+    ok(sameT(atFit.t, out.t), `${name}: zooming out or panning the whole image on the page keeps the external fit`);
+}
+
+// The case the former framing failed: a wide page zoomed in on a square image, shown
+// on a 4:3 projector. Everything the page shows is there, larger than fit.
+{
+    const p = { geomW: 10, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: false };
+    const page = { w: 1920, h: 960 }, proj = { w: 1024, h: 768 };
+    const fit = fitScale(page.w, page.h, 10, 10, FRUSTUM_H);
+    const { t } = checkFraming('wide page zoomed in, 4:3 projector', p, fit * 2, 3, 0, page, proj);
+    ok(p.geomH * t.scaleY > extFitHeight(p, proj) * 1.5, 'wide page zoomed in: the external view is zoomed in too');
+}
+
+// Zooming in on the page changes the external view continuously and never shrinks it.
+{
+    const p = { geomW: 10 * 3 / 2, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: false };
+    const b = meshBaseSize(p);
+    const fit = fitScale(menuOpen.w, menuOpen.h, b.width, b.height, FRUSTUM_H);
+    let prev = null, smooth = true, monotone = true;
+    for (let f = 0.5; f <= 4; f *= 1.01) {
+        const { t } = frame(p, fit * f, 0.3, -0.2, menuOpen, tvView);
+        if (prev) {
+            if (t.scaleY / prev > 1.0101 + 1e-9) smooth = false;
+            if (t.scaleY < prev * (1 - 1e-12)) monotone = false;
+        }
+        prev = t.scaleY;
+    }
+    ok(smooth, 'zooming in: no jump in the external view');
+    ok(monotone, 'zooming in: the external view never zooms out');
+}
+
+// Nothing of the image on the page, or no usable page view: the whole image at fit.
+{
+    const p = { geomW: 10 * 4 / 3, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: false };
+    const away = checkFraming('panned out of the page', p, 1, 40, 0, menuOpen, tvView);
+    ok(near(p.geomH * away.t.scaleY, extFitHeight(p, tvView)) && near(away.t.x, 0), 'panned out of the page: the whole image at fit');
+    const collapsed = frame(p, 1, 0, 0, menuOpen, tvView, { left: NaN, right: NaN, top: NaN, bottom: NaN });
+    ok(near(p.geomH * collapsed.t.scaleY, extFitHeight(p, tvView)), 'no usable page view: the whole image at fit');
+}
+
+// 3DTV is not framed this way: the plane covers the external view, as the page's covers its own.
+{
+    const tv = { geomW: 10 * 4 / 3, geomH: 10, baseScaleX: 1, baseScaleY: 1, cropX: 0, cropY: 0, is3dtv: true, scale: 3, panX: 0, panY: 0 };
+    const extT = meshTransform({ ...tv, viewW: 1920, viewH: 1080, frustumH: FRUSTUM_H });
+    ok(near(extT.scaleX * tv.geomW, FRUSTUM_H * 1920 / 1080) && near(extT.scaleY * tv.geomH, FRUSTUM_H),
+        '3DTV: the mesh covers the external frustum exactly');
+}
 
 // --- The external pixel ratio ------------------------------------------------------
 ok(externalPixelRatio(1, 3) === 3, 'horizontal interlace: the window ratio, uncapped');

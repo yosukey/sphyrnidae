@@ -15,9 +15,10 @@
  * - the grid: never drawn here (it is an on-screen aid for the page);
  * - the pointer: the 3D pointer as the page draws it, or — with the 3D pointer
  *   off — the mouse's place as a flat arrow (externalPointer);
- * - the plane's scale and position: the page's framing scaled to this window's
- *   aspect (view-fit.js), so the same image point is at the centre at the same
- *   zoom relative to fit.
+ * - the plane's scale and position: what the page shows of the image, as large as
+ *   it fits in this window (view-fit.js externalFraming) — the whole image at fit
+ *   while the page shows it all, the page's zoomed-in view centred otherwise; in
+ *   3DTV, stretched over this window like the page's over its own.
  *
  * The cost of drawing twice is a second WebGL context: the image texture is
  * uploaded to the GPU once for each.
@@ -28,8 +29,8 @@
 import * as THREE from 'three';
 import { state, CONSTANTS, is3DTVActive } from '../globals.js';
 import { isInterlaceMode } from '../mode-utils.js';
-import { meshFitInputs, pageFitScale } from './renderer.js';
-import { meshBaseSize, fitScale, meshTransform, externalZoom, externalPixelRatio } from '../core/view-fit.js';
+import { meshFitInputs } from './renderer.js';
+import { meshTransform, externalFraming, externalPixelRatio } from '../core/view-fit.js';
 import { externalPointer } from '../core/external-window-utils.js';
 import { ExternalWindow } from '../ui/external-window.js';
 
@@ -281,7 +282,7 @@ export class ExternalOutput {
         if (dst.pointer3dParallax) dst.pointer3dParallax.value = p.parallax;
     }
 
-    /** The plane: the page's geometry, at the page's framing scaled to this window. */
+    /** The plane: the page's geometry, framed by what the page shows of it. */
     syncMesh() {
         const page = state.mesh;
         if (!this.mesh) {
@@ -293,21 +294,34 @@ export class ExternalOutput {
         this.mesh.visible = true;
 
         const { width, height } = this.window.size();
-        const is3dtv = is3DTVActive();
-        const inputs = meshFitInputs(is3dtv);
-        const base = meshBaseSize(inputs);
         const frustumH = CONSTANTS.CAMERA_FRUSTUM_HEIGHT;
-        const zoom = externalZoom(pageFitScale(), fitScale(width, height, base.width, base.height, frustumH));
-        const t = meshTransform({
-            ...inputs,
-            viewW: width,
-            viewH: height,
-            frustumH,
-            scale: state.params.scale,
-            panX: state.params.panX,
-            panY: state.params.panY,
-            zoom
-        });
+        let t;
+        if (is3DTVActive()) {
+            // 3DTV: the plane covers the whole view, stretched; the shader fits the
+            // image in it (and zooms) from this window's resolution.
+            t = meshTransform({
+                ...meshFitInputs(true),
+                viewW: width,
+                viewH: height,
+                frustumH,
+                scale: state.params.scale,
+                panX: state.params.panX,
+                panY: state.params.panY
+            });
+        } else {
+            // What the page shows of the image, as large as it fits here: the page's
+            // plane as drawn, seen through the page camera's frustum.
+            const camera = state.camera;
+            t = externalFraming({
+                mesh: { scaleX: page.scale.x, scaleY: page.scale.y, x: page.position.x, y: page.position.y },
+                geomW: page.geometry.parameters.width,
+                geomH: page.geometry.parameters.height,
+                view: { left: camera.left, right: camera.right, top: camera.top, bottom: camera.bottom },
+                viewW: width,
+                viewH: height,
+                frustumH
+            });
+        }
         if (Number.isFinite(t.scaleX) && Number.isFinite(t.scaleY) && Number.isFinite(t.x) && Number.isFinite(t.y)) {
             this.mesh.scale.set(t.scaleX, t.scaleY, 1);
             this.mesh.position.set(t.x, t.y, page.position.z);

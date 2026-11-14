@@ -6,11 +6,8 @@
  * The orthographic camera's frustum is `frustumH` tall (CONSTANTS.CAMERA_FRUSTUM_HEIGHT)
  * and `frustumH * aspect` wide, so a view's size enters only through its aspect.
  *
- * The page keeps its zoom and pan (state.params.scale / panX / panY) in world units of
- * its own view. Another view of a different aspect shows the same framing by scaling
- * the whole plane by `fitScale(other) / fitScale(page)` about the origin
- * (externalZoom): the same image point stays at the centre, at the same zoom relative
- * to "fit", and only the visible extent grows or shrinks with the aspect.
+ * The external window frames the plane by what the page shows of it
+ * (externalFraming): the part of the image visible on the page, as large as it fits.
  */
 
 import { isInterlaceMode } from '../mode-utils.js';
@@ -52,39 +49,68 @@ export function fitScale(viewW, viewH, meshBaseW, meshBaseH, frustumH) {
  * - 3DTV: stretched to cover the whole frustum, ignoring aspect (the shader fits the
  *   image within it), at the pan.
  *
- * `zoom` scales the page's framing to another view (externalZoom); 1 for the page.
- *
  * @param {{viewW:number, viewH:number, frustumH:number, geomW:number, geomH:number,
  *          baseScaleX:number, baseScaleY:number, scale:number, panX:number, panY:number,
- *          cropX:number, cropY:number, is3dtv:boolean, zoom?:number}} p
+ *          cropX:number, cropY:number, is3dtv:boolean}} p
  * @returns {{scaleX:number, scaleY:number, x:number, y:number}}
  */
-export function meshTransform({ viewW, viewH, frustumH, geomW, geomH, baseScaleX, baseScaleY, scale, panX, panY, cropX, cropY, is3dtv, zoom = 1 }) {
-    const x = panX * zoom;
-    const y = panY * zoom;
+export function meshTransform({ viewW, viewH, frustumH, geomW, geomH, baseScaleX, baseScaleY, scale, panX, panY, cropX, cropY, is3dtv }) {
     if (is3dtv) {
         const aspect = viewW / viewH;
         const frustumW = frustumH * aspect;
-        return { scaleX: frustumW / geomW, scaleY: frustumH / geomH, x, y };
+        return { scaleX: frustumW / geomW, scaleY: frustumH / geomH, x: panX, y: panY };
     }
-    const s = scale * zoom;
     const cropRatioX = 1.0 - cropX;
     const cropRatioY = 1.0 - cropY;
-    return { scaleX: baseScaleX * s * cropRatioX, scaleY: baseScaleY * s * cropRatioY, x, y };
+    return { scaleX: baseScaleX * scale * cropRatioX, scaleY: baseScaleY * scale * cropRatioY, x: panX, y: panY };
 }
 
 /**
- * The factor that carries the page's framing to another view: the ratio of the two
- * views' fit scales. 1 when either is not a usable number (a collapsed view).
- * @param {number} pageFit - fitScale of the page's view
- * @param {number} otherFit - fitScale of the other view
- * @returns {number}
+ * Where the external window puts the plane (outside 3DTV): the part of the image
+ * visible on the page, centred, as large as it fits in the other view.
+ *
+ * So everything of the image the page shows is in the other view too — what the
+ * operator points at is always in the audience's sight — and as large as can be:
+ *
+ * - The whole image on the page (at fit, zoomed out, or with the page's view grown
+ *   around it): the whole image at the other view's fit. The page's own size does not
+ *   enter, so opening or closing a panel on the page moves nothing there.
+ * - Zoomed in: the page's window into the image, centred; where the two views'
+ *   aspects differ, more of the image around it shows.
+ * - None of the image on the page (panned out of view), or no usable page view: the
+ *   whole image at fit.
+ *
+ * The plane is the page's plane scaled by one factor about the visible part's centre,
+ * so its aspect, and every image point's place relative to the others, are kept.
+ *
+ * @param {Object} p
+ * @param {{scaleX:number, scaleY:number, x:number, y:number}} p.mesh - the page's plane: scale and position
+ * @param {number} p.geomW - the plane geometry's width (world units at scale 1)
+ * @param {number} p.geomH - the plane geometry's height
+ * @param {{left:number, right:number, top:number, bottom:number}} p.view - the page camera's frustum (world units; the camera sits at the origin)
+ * @param {number} p.viewW - the other view's width (CSS px)
+ * @param {number} p.viewH - the other view's height
+ * @param {number} p.frustumH - the frustum height of both views (world units)
+ * @returns {{scaleX:number, scaleY:number, x:number, y:number}}
  */
-export function externalZoom(pageFit, otherFit) {
-    if (!(Number.isFinite(pageFit) && pageFit > 0 && Number.isFinite(otherFit) && otherFit > 0)) {
-        return 1;
+export function externalFraming({ mesh, geomW, geomH, view, viewW, viewH, frustumH }) {
+    const halfW = Math.abs(geomW * mesh.scaleX) / 2;
+    const halfH = Math.abs(geomH * mesh.scaleY) / 2;
+    // The visible part: the page's view clipped to the plane.
+    let x0 = Math.max(view.left, mesh.x - halfW);
+    let x1 = Math.min(view.right, mesh.x + halfW);
+    let y0 = Math.max(view.bottom, mesh.y - halfH);
+    let y1 = Math.min(view.top, mesh.y + halfH);
+    if (!(x1 - x0 > 0 && y1 - y0 > 0)) {
+        x0 = mesh.x - halfW;
+        x1 = mesh.x + halfW;
+        y0 = mesh.y - halfH;
+        y1 = mesh.y + halfH;
     }
-    return otherFit / pageFit;
+    const k = Math.min((frustumH * (viewW / viewH)) / (x1 - x0), frustumH / (y1 - y0));
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + y1) / 2;
+    return { scaleX: mesh.scaleX * k, scaleY: mesh.scaleY * k, x: (mesh.x - cx) * k, y: (mesh.y - cy) * k };
 }
 
 /**

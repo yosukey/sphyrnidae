@@ -1666,23 +1666,6 @@ export function meshFitInputs(is3dtv = is3DTVActive()) {
 }
 
 /**
- * The mesh scale "fit" gives in the page's canvas container right now — what
- * fitImageToWindow() would set. The external window scales the page's framing by
- * its own fit over this one (view-fit.js externalZoom). NaN without a mesh or
- * while the container is collapsed.
- * @returns {number}
- */
-export function pageFitScale() {
-    if (!state.mesh) return NaN;
-    const container = document.getElementById('canvas-container');
-    const w = container ? container.clientWidth : window.innerWidth;
-    const h = container ? container.clientHeight : window.innerHeight;
-    if (!(w > 0) || !(h > 0)) return NaN;
-    const base = meshBaseSize(meshFitInputs());
-    return computeFitScale(w, h, base.width, base.height, CONSTANTS.CAMERA_FRUSTUM_HEIGHT);
-}
-
-/**
 * Fit (fit within the display area)
 */
 export function fitImageToWindow() {

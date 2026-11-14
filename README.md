@@ -228,9 +228,14 @@ window that shows only the picture, while this window stays as it is for
 operating. Press the same button again, or close the window, to end it.
 
 - **What is shown**: the image in the current display mode, with every
-  adjustment (parallax, alignment, crop, color, text overlay, wiggle, 3DTV),
-  framed as on the page: the same point at the center, at the same zoom relative
-  to fit, adapted to the window's aspect ratio. The alignment grid is not shown.
+  adjustment (parallax, alignment, crop, color, text overlay, wiggle, 3DTV).
+  The alignment grid is not shown.
+- **Framing**: everything of the image visible in this window is shown there,
+  centered and as large as it fits. While this window shows the whole image (at
+  fit, or zoomed out), the external window shows it at its own fit, so opening or
+  closing panels here does not move it. Zoomed in, it shows the part visible
+  here (and more around it where the aspect ratios differ), so whatever you point
+  at is always in view. Viewer-mode zoom and 3DTV are mirrored as they are.
 - **The pointer**: the mouse over the image is shown there too. With the 3D
   pointer on (`D`), it is drawn exactly as on the page, at its depth; otherwise
   as a flat arrow at screen depth.
